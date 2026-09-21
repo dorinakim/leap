@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>단어 — 사진 등록</title>
+<link rel="stylesheet" href="styles.css?v=1" />
+<link rel="stylesheet" href="camera.css?v=1" />
+</head>
+<body class="camera-body">
+  <div class="camera-page">
+    <header class="cam-topbar">
+      <button class="cam-icon-btn" id="btnSettings" aria-label="설정">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <button class="cam-icon-btn" id="btnFlash" aria-label="플래시">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path class="flash-off-slash" d="M3 3l18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <button class="cam-icon-btn" id="btnClose" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 5l14 14M19 5 5 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </header>
+
+    <div class="cam-stage" id="cameraStage">
+      <video id="cameraVideo" class="cam-video" autoplay playsinline muted></video>
+      <div class="cam-fallback" id="cameraFallback" hidden>
+        <p>카메라를 사용할 수 없어요</p>
+        <span>브라우저 카메라 권한을 확인해 주세요</span>
+      </div>
+      <div class="cam-flash-overlay" id="camFlashOverlay"></div>
+
+      <div class="cam-mode-toggle" id="camModeToggle">
+        <button class="cam-mode-btn is-active" data-mode="photo">사진</button>
+        <button class="cam-mode-btn" data-mode="video">동영상</button>
+      </div>
+    </div>
+
+    <footer class="cam-toolbar" id="cameraToolbar">
+      <button class="cam-thumb" id="btnAlbum" aria-label="앨범에서 불러오기">
+        <img src="assets/album/album-01.png" alt="" />
+      </button>
+      <button class="cam-shutter" id="btnShutter" aria-label="촬영"></button>
+      <button class="cam-flip" id="btnFlip" aria-label="카메라 전환">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 9a8 8 0 0 1 14-4.9M20 15a8 8 0 0 1-14 4.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18 3v4h-4M6 21v-4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </footer>
+
+    <!-- Album picker -->
+    <section class="album-view" id="albumView" hidden>
+      <div class="album-topbar">
+        <button class="album-device-btn" id="btnDeviceFile">내 기기에서 사진/동영상 선택</button>
+        <input type="file" id="deviceFileInput" accept="image/*,video/*" hidden />
+      </div>
+      <div class="album-grid" id="albumGrid"></div>
+    </section>
+
+    <!-- Captured / selected photo preview -->
+    <section class="preview-view" id="previewView" hidden>
+      <img class="preview-image" id="previewImage" alt="선택한 사진" />
+      <video class="preview-video" id="previewVideo" controls playsinline hidden></video>
+      <div class="preview-actions">
+        <button class="preview-btn preview-btn--ghost" id="btnRetake">다시 선택</button>
+        <button class="preview-btn preview-btn--solid" id="btnUsePhoto">이 사진 사용하기</button>
+      </div>
+    </section>
+  </div>
+
+  <canvas id="captureCanvas" hidden></canvas>
+
+  <script src="capture.js?v=1"></script>
+</body>
+</html>
