@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>단어 — 마이페이지</title>
+<link rel="stylesheet" href="styles.css?v=1" />
+<link rel="stylesheet" href="mypage.css?v=1" />
+</head>
+<body>
+  <div class="app">
+    <header class="mypage-header">
+      <h1 class="mypage-title">dorina</h1>
+      <span class="mypage-flag" id="mypageFlag">🇺🇸</span>
+    </header>
+
+    <section class="mypage-profile">
+      <img class="mypage-avatar" src="assets/profile/avatar-dorina.png" alt="dorina" />
+      <div class="mypage-stats">
+        <div class="mypage-stat">
+          <b id="statPosts">0</b>
+          <span>게시물</span>
+        </div>
+        <div class="mypage-stat">
+          <b>60</b>
+          <span>팔로워</span>
+        </div>
+        <div class="mypage-stat">
+          <b>4</b>
+          <span>팔로잉</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="mypage-buttons">
+      <button class="mypage-btn" id="btnEditProfile">프로필 편집</button>
+      <button class="mypage-btn" id="btnShareProfile">프로필 공유</button>
+      <button class="mypage-btn mypage-btn--icon" id="btnAddFriend" aria-label="친구 추가">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M2.8 19c.8-3.4 3.2-5 6.2-5s5.4 1.6 6.2 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18 8v5M15.5 10.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="mypage-tabs">
+      <button class="mypage-tab is-active" data-tab="posts" aria-label="게시물">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+      </button>
+      <button class="mypage-tab" data-tab="bookmarks" aria-label="북마크">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 4h12v16l-6-4-6 4V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <main class="content mypage-content">
+      <section class="photo-grid mypage-grid" id="mypageGrid" aria-label="마이페이지 썸네일"></section>
+    </main>
+
+    <button class="fab" id="btnFab" aria-label="사진 등록하기">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <nav class="gnb" aria-label="주요 메뉴">
+      <div class="gnb-inner">
+        <button class="gnb-item" data-tab="home">
+          <img class="icon-inactive" src="assets/icon-home.png" alt="" />
+          <img class="icon-active" src="assets/icon-home_active.png" alt="" />
+          <span>홈</span>
+        </button>
+        <button class="gnb-item" data-tab="feed">
+          <img class="icon-inactive" src="assets/icon-feed.png" alt="" />
+          <img class="icon-active" src="assets/icon-feed_active.png" alt="" />
+          <span>피드</span>
+        </button>
+        <button class="gnb-item is-active" data-tab="my">
+          <img class="icon-inactive" src="assets/icon-mypage.png" alt="" />
+          <img class="icon-active" src="assets/icon-mypage_active.png" alt="" />
+          <span>마이페이지</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <script src="posts-store.js?v=5"></script>
+  <script src="dictdata.js?v=19"></script>
+  <script src="search.js?v=3"></script>
+  <script src="mypageview.js?v=2"></script>
+</body>
+</html>

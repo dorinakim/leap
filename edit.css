@@ -1,0 +1,160 @@
+.edit-word-block {
+  margin-top: 18px;
+}
+
+.edit-word-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.edit-word-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-soft);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+.edit-word-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #fff;
+}
+
+/* ---------- Generic inline-editable fields ---------- */
+.edit-inline-input,
+.edit-inline-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-soft);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.edit-inline-input {
+  height: 42px;
+}
+
+.edit-inline-textarea {
+  resize: vertical;
+  min-height: 44px;
+}
+
+.edit-inline-input:focus,
+.edit-inline-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #fff;
+}
+
+/* Big English word heading, now an editable input but kept looking like a heading */
+.dict-word {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+}
+
+.dict-word:focus {
+  outline: none;
+  background: var(--bg-soft);
+  border-radius: 8px;
+}
+
+/* Speaker button + editable phonetic side by side */
+.dict-speak-row {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dict-speak-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  display: flex;
+  flex-shrink: 0;
+}
+
+.dict-speak-btn svg {
+  width: 26px;
+  height: 26px;
+  color: var(--accent);
+}
+
+.dict-phonetic-input {
+  flex: 1;
+  height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-soft);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.dict-phonetic-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #fff;
+}
+
+/* Part-of-speech tag input */
+.dict-tag-input {
+  display: inline-block;
+  width: 90px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1.5px solid var(--accent);
+  border-radius: 999px;
+  background: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  text-align: center;
+}
+
+.dict-tag-input:focus {
+  outline: none;
+  background: var(--bg-soft);
+}
+
+/* Rows of editable fields for definitions / examples / idioms / conversation */
+.edit-definition-row,
+.edit-example-row,
+.edit-idiom-row,
+.edit-conversation-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+
+.edit-definition-pos {
+  width: 100px;
+}
+
+.dict-meanings-edit {
+  margin-top: 10px;
+}

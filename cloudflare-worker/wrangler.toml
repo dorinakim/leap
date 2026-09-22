@@ -1,0 +1,8 @@
+name = "leap-vision-proxy"
+main = "vision-proxy.js"
+compatibility_date = "2024-01-01"
+
+# 아래 두 값은 파일에 적지 말고 반드시 `wrangler secret put`으로 등록하세요
+# (README.md 참고). 이 파일에 비밀 값을 직접 적으면 안 돼요.
+#   GCP_SERVICE_ACCOUNT_JSON  — 서비스 계정 키 JSON 전체 내용
+#   ALLOWED_ORIGIN            — (선택) 이 사이트 origin, 예: http://localhost:5174

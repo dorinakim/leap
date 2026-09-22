@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>단어 — 피드</title>
+<link rel="stylesheet" href="styles.css?v=1" />
+<link rel="stylesheet" href="feed.css?v=1" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <a class="logo" id="logoHome" href="index.html">피드</a>
+      <div class="search-bar" role="search">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+          <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="검색" aria-label="검색" />
+      </div>
+    </header>
+
+    <main class="content feed-content">
+      <div class="feed-list" id="feedList"></div>
+      <section class="photo-grid search-grid" id="searchGrid" aria-label="검색 결과" hidden></section>
+    </main>
+
+    <nav class="gnb" aria-label="주요 메뉴">
+      <div class="gnb-inner">
+        <button class="gnb-item" data-tab="home">
+          <img class="icon-inactive" src="assets/icon-home.png" alt="" />
+          <img class="icon-active" src="assets/icon-home_active.png" alt="" />
+          <span>홈</span>
+        </button>
+        <button class="gnb-item is-active" data-tab="feed">
+          <img class="icon-inactive" src="assets/icon-feed.png" alt="" />
+          <img class="icon-active" src="assets/icon-feed_active.png" alt="" />
+          <span>피드</span>
+        </button>
+        <button class="gnb-item" data-tab="my">
+          <img class="icon-inactive" src="assets/icon-mypage.png" alt="" />
+          <img class="icon-active" src="assets/icon-mypage_active.png" alt="" />
+          <span>마이페이지</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Comment bottom sheet -->
+  <div class="sheet-overlay" id="commentOverlay" hidden>
+    <div class="comment-sheet" id="commentSheet">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title">댓글</h2>
+      <div class="comment-list" id="commentList"></div>
+      <div class="comment-input-row">
+        <span class="comment-my-avatar">D</span>
+        <input type="text" id="commentInput" placeholder="회원님의 생각을 남겨보세요." />
+        <button class="comment-send-btn" id="btnCommentSend" aria-label="전송">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 12 20 4l-6 16-3-7-7-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- More menu (bookmark / delete) -->
+  <div class="action-overlay" id="moreOverlay" hidden>
+    <div class="more-sheet">
+      <div class="sheet-handle"></div>
+      <button class="more-action-btn" id="btnBookmarkAction">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 4h12v16l-6-4-6 4V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span id="bookmarkActionLabel">저장</span>
+      </button>
+      <button class="more-action-btn more-action-btn--danger" id="btnDeleteAction">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-.8 12.1a2 2 0 0 1-2 1.9H8.8a2 2 0 0 1-2-1.9L6 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>삭제</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Delete confirmation -->
+  <div class="confirm-overlay" id="confirmOverlay" hidden>
+    <div class="confirm-dialog">
+      <p class="confirm-message">게시물을 삭제하시겠어요?</p>
+      <button class="confirm-btn confirm-btn--danger" id="btnConfirmDelete">삭제</button>
+      <button class="confirm-btn" id="btnCancelDelete">취소</button>
+    </div>
+  </div>
+
+  <script src="posts-store.js?v=5"></script>
+  <script src="dictdata.js?v=19"></script>
+  <script src="search.js?v=3"></script>
+  <script src="feedview.js?v=3"></script>
+</body>
+</html>

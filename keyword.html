@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>단어 — 키워드 선택</title>
+<link rel="stylesheet" href="styles.css?v=1" />
+<link rel="stylesheet" href="keyword.css?v=1" />
+</head>
+<body class="kw-body">
+  <div class="kw-page">
+    <header class="kw-topbar">
+      <button class="kw-back" id="btnBack" aria-label="뒤로가기">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <a class="kw-home-logo" id="logoHome" href="index.html">단어</a>
+    </header>
+
+    <div class="kw-content">
+      <h1 class="kw-title">전달하고자 하는 의미의 단어를 골라주세요.</h1>
+
+      <div class="kw-photo-wrap">
+        <img class="kw-photo" id="kwPhoto" src="assets/demo-apple.png" alt="선택한 사진" />
+        <video class="kw-photo" id="kwVideo" muted playsinline loop hidden></video>
+      </div>
+
+      <div class="kw-scanning" id="kwScanning">
+        <span class="kw-spinner"></span>
+        <span id="kwScanningText">AI가 사진 속 의미를 분석하고 있어요...</span>
+      </div>
+
+      <div class="kw-chips" id="kwChips" hidden></div>
+
+      <div class="kw-voice">
+        <button class="kw-mic" id="btnMic" aria-label="음성으로 입력">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" stroke="currentColor" stroke-width="1.8"/><path d="M6 11v1a6 6 0 0 0 12 0v-1M12 18v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <p class="kw-voice-hint" id="kwVoiceHint">더 도움이 필요하다면, 직접 이야기해 주세요!</p>
+      </div>
+    </div>
+
+    <footer class="kw-inputbar">
+      <input type="text" id="kwInput" placeholder="혹은 채팅으로 말씀하셔도 됩니다." />
+      <button class="kw-send" id="btnSend" aria-label="전송">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12 20 4l-6 16-3-7-7-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="currentColor"/></svg>
+      </button>
+    </footer>
+  </div>
+
+  <!-- TensorFlow.js image recognition — runs fully in the browser, no key needed.
+       (Google Cloud Vision also runs when a proxy URL is set in wordpick.js;
+       see VISION_PROXY_URL and cloudflare-worker/README.md.) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
+  <script src="dictdata.js?v=19"></script>
+  <script src="wordpick.js?v=7"></script>
+</body>
+</html>
