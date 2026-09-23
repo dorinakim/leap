@@ -167,6 +167,9 @@
   border: 1.5px solid rgba(255, 255, 255, 0.5);
   padding: 0;
   background: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cam-thumb img {
@@ -174,6 +177,13 @@
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+/* 아직 이 앱에서 찍거나 고른 사진이 없을 때 보여주는 기본 아이콘 */
+.cam-thumb svg {
+  width: 20px;
+  height: 20px;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .cam-shutter {

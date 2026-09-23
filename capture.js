@@ -17,6 +17,8 @@ const btnShutter = document.getElementById("btnShutter");
 const btnFlip = document.getElementById("btnFlip");
 const btnRetake = document.getElementById("btnRetake");
 const btnUsePhoto = document.getElementById("btnUsePhoto");
+const albumThumbImg = document.getElementById("albumThumbImg");
+const albumThumbIcon = document.getElementById("albumThumbIcon");
 
 let currentStream = null;
 let facingMode = "environment";
@@ -38,6 +40,64 @@ function showToast(message) {
   toast.classList.add("is-visible");
   clearTimeout(showToast._t);
   showToast._t = setTimeout(() => toast.classList.remove("is-visible"), 1800);
+}
+
+/* ---------- 앨범 버튼 썸네일 ----------
+   브라우저는 기기 사진 라이브러리를 미리 읽을 수 없어서(사용자가 직접 골라야만
+   접근 가능), "가장 최근 사진"을 진짜로 알아낼 방법이 없어요. 대신 이 앱에서
+   마지막으로 촬영했거나 앨범에서 골랐던 사진을 기기에 기억해뒀다가 보여줘요. */
+const LAST_PHOTO_THUMB_KEY = "leaf:lastPhotoThumb";
+const THUMB_SIZE = 88; // 44px 버튼 크기의 2배(레티나 대응)
+
+function showAlbumThumb(dataUrl) {
+  albumThumbImg.src = dataUrl;
+  albumThumbImg.hidden = false;
+  albumThumbIcon.hidden = true;
+}
+
+function saveAlbumThumb(dataUrl) {
+  showAlbumThumb(dataUrl);
+  try {
+    localStorage.setItem(LAST_PHOTO_THUMB_KEY, dataUrl);
+  } catch (e) {
+    /* 저장 공간이 꽉 찼거나 접근 불가면 이번 화면에서만 보이고 다음엔 안 남아요 */
+  }
+}
+
+// 사진(이미지)을 정사각형으로 가운데 크롭해서 작은 썸네일로 만들어요.
+function makeSquareThumbnail(imgEl) {
+  const side = Math.min(imgEl.naturalWidth, imgEl.naturalHeight);
+  const sx = (imgEl.naturalWidth - side) / 2;
+  const sy = (imgEl.naturalHeight - side) / 2;
+  const thumbCanvas = document.createElement("canvas");
+  thumbCanvas.width = THUMB_SIZE;
+  thumbCanvas.height = THUMB_SIZE;
+  thumbCanvas.getContext("2d").drawImage(imgEl, sx, sy, side, side, 0, 0, THUMB_SIZE, THUMB_SIZE);
+  return thumbCanvas.toDataURL("image/jpeg", 0.85);
+}
+
+// 방금 촬영/선택한 사진(src)으로 앨범 썸네일을 갱신해요. 동영상은 프레임을
+// 뽑아내는 게 번거로워서(스코프상) 건너뛰고, 사진일 때만 갱신합니다.
+function updateAlbumThumbFrom(src, mediaType) {
+  if (mediaType === "video") return;
+  const img = new Image();
+  img.onload = () => {
+    try {
+      saveAlbumThumb(makeSquareThumbnail(img));
+    } catch (e) {
+      /* 썸네일 생성에 실패해도 촬영/선택 자체엔 영향 없어요 */
+    }
+  };
+  img.src = src;
+}
+
+function initAlbumThumb() {
+  try {
+    const saved = localStorage.getItem(LAST_PHOTO_THUMB_KEY);
+    if (saved) showAlbumThumb(saved);
+  } catch (e) {
+    /* 저장된 게 없거나 접근 불가면 기본 아이콘 그대로 둬요 */
+  }
 }
 
 async function startCamera() {
@@ -73,6 +133,7 @@ function showStage() {
 
 function showPreview(src, mediaType) {
   capturedMediaType = mediaType || "image";
+  updateAlbumThumbFrom(src, capturedMediaType);
   if (capturedMediaType === "video") {
     previewVideo.src = src;
     previewVideo.hidden = false;
@@ -228,6 +289,7 @@ deviceFileInput.addEventListener("change", async () => {
   deviceFileInput.value = "";
 });
 
+initAlbumThumb();
 startCamera();
 
 window.addEventListener("pagehide", stopCamera);
