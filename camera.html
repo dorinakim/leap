@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>단어 — 사진 등록</title>
 <link rel="stylesheet" href="styles.css?v=1" />
-<link rel="stylesheet" href="camera.css?v=1" />
+<link rel="stylesheet" href="camera.css?v=2" />
 </head>
 <body class="camera-body">
   <div class="camera-page">
@@ -29,7 +29,9 @@
       </div>
       <div class="cam-flash-overlay" id="camFlashOverlay"></div>
 
-      <div class="cam-mode-toggle" id="camModeToggle">
+      <!-- 베타에서는 사진 촬영만 지원해요(동영상 모드 토글은 나중에 다시 켤 수 있도록
+           코드는 남겨두고, 화면에만 안 보이게 숨겨뒀어요). -->
+      <div class="cam-mode-toggle" id="camModeToggle" hidden>
         <button class="cam-mode-btn is-active" data-mode="photo">사진</button>
         <button class="cam-mode-btn" data-mode="video">동영상</button>
       </div>
@@ -45,14 +47,9 @@
       </button>
     </footer>
 
-    <!-- Album picker -->
-    <section class="album-view" id="albumView" hidden>
-      <div class="album-topbar">
-        <button class="album-device-btn" id="btnDeviceFile">내 기기에서 사진/동영상 선택</button>
-        <input type="file" id="deviceFileInput" accept="image/*,video/*" hidden />
-      </div>
-      <div class="album-grid" id="albumGrid"></div>
-    </section>
+    <!-- 앨범 아이콘을 누르면 디자인 목업 그리드 대신, 바로 이 input이 열려서
+         실제 기기의 사진/동영상 라이브러리에서 고를 수 있어요. -->
+    <input type="file" id="deviceFileInput" accept="image/*,video/*" hidden />
 
     <!-- Captured / selected photo preview -->
     <section class="preview-view" id="previewView" hidden>
@@ -67,6 +64,6 @@
 
   <canvas id="captureCanvas" hidden></canvas>
 
-  <script src="capture.js?v=1"></script>
+  <script src="capture.js?v=2"></script>
 </body>
 </html>

@@ -1,22 +1,8 @@
-const ALBUM_PHOTOS = [
-  "assets/album/album-01.png",
-  "assets/album/album-02.png",
-  "assets/album/album-03.png",
-  "assets/album/album-04.png",
-  "assets/album/album-05.png",
-  "assets/album/album-06.png",
-  "assets/album/album-07.png",
-  "assets/album/album-08.png",
-  "assets/album/album-09.png",
-];
-
 const video = document.getElementById("cameraVideo");
 const fallback = document.getElementById("cameraFallback");
 const flashOverlay = document.getElementById("camFlashOverlay");
 const toolbar = document.getElementById("cameraToolbar");
 const modeToggle = document.getElementById("camModeToggle");
-const albumView = document.getElementById("albumView");
-const albumGrid = document.getElementById("albumGrid");
 const previewView = document.getElementById("previewView");
 const previewImage = document.getElementById("previewImage");
 const previewVideo = document.getElementById("previewVideo");
@@ -31,7 +17,6 @@ const btnShutter = document.getElementById("btnShutter");
 const btnFlip = document.getElementById("btnFlip");
 const btnRetake = document.getElementById("btnRetake");
 const btnUsePhoto = document.getElementById("btnUsePhoto");
-const btnDeviceFile = document.getElementById("btnDeviceFile");
 
 let currentStream = null;
 let facingMode = "environment";
@@ -80,19 +65,10 @@ function stopCamera() {
 }
 
 function showStage() {
-  albumView.hidden = true;
   previewView.hidden = true;
   toolbar.style.display = "flex";
   modeToggle.style.display = "flex";
   btnFlash.style.visibility = "visible";
-}
-
-function showAlbum() {
-  previewView.hidden = true;
-  toolbar.style.display = "none";
-  modeToggle.style.display = "none";
-  btnFlash.style.visibility = "hidden";
-  albumView.hidden = false;
 }
 
 function showPreview(src, mediaType) {
@@ -108,25 +84,9 @@ function showPreview(src, mediaType) {
     previewVideo.hidden = true;
     btnUsePhoto.textContent = "이 사진 사용하기";
   }
-  albumView.hidden = true;
   toolbar.style.display = "none";
   modeToggle.style.display = "none";
   previewView.hidden = false;
-}
-
-function renderAlbumGrid() {
-  const frag = document.createDocumentFragment();
-  ALBUM_PHOTOS.forEach((src) => {
-    const btn = document.createElement("button");
-    btn.className = "album-cell";
-    const img = document.createElement("img");
-    img.src = src;
-    img.alt = "";
-    btn.appendChild(img);
-    btn.addEventListener("click", () => showPreview(src, "image"));
-    frag.appendChild(btn);
-  });
-  albumGrid.appendChild(frag);
 }
 
 function capturePhoto() {
@@ -208,15 +168,14 @@ btnClose.addEventListener("click", () => {
     showStage();
     return;
   }
-  if (!albumView.hidden) {
-    showStage();
-    return;
-  }
   stopCamera();
   window.location.href = "index.html";
 });
 
-btnAlbum.addEventListener("click", showAlbum);
+// 디자인 목업용 앨범 그리드 대신, 바로 실제 기기의 사진/동영상 선택 창을 열어요.
+btnAlbum.addEventListener("click", () => {
+  deviceFileInput.click();
+});
 
 btnShutter.addEventListener("click", () => {
   if (captureMode === "photo") {
@@ -260,10 +219,6 @@ btnUsePhoto.addEventListener("click", () => {
   window.location.href = "keyword.html";
 });
 
-btnDeviceFile.addEventListener("click", () => {
-  deviceFileInput.click();
-});
-
 deviceFileInput.addEventListener("change", async () => {
   const file = deviceFileInput.files[0];
   if (!file) return;
@@ -273,7 +228,6 @@ deviceFileInput.addEventListener("change", async () => {
   deviceFileInput.value = "";
 });
 
-renderAlbumGrid();
 startCamera();
 
 window.addEventListener("pagehide", stopCamera);

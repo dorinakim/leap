@@ -229,56 +229,6 @@
   height: 26px;
 }
 
-/* ---------- Album picker ---------- */
-.album-view {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  background: #000;
-  padding-top: 76px;
-  overflow-y: auto;
-}
-
-.album-topbar {
-  padding: 0 16px 14px;
-}
-
-.album-device-btn {
-  width: 100%;
-  height: 44px;
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
-  border-radius: 10px;
-  background: none;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.album-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
-}
-
-@media (min-width: 640px) {
-  .album-grid { grid-template-columns: repeat(4, 1fr); gap: 4px; }
-}
-
-.album-cell {
-  aspect-ratio: 1 / 1;
-  border: none;
-  padding: 0;
-  overflow: hidden;
-  background: #111;
-}
-
-.album-cell img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
 /* ---------- Preview / confirm ---------- */
 .preview-view {
   position: absolute;
