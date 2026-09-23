@@ -279,10 +279,35 @@
 
 .csheet-comment-actions {
   margin-top: 5px;
-  font-size: 12.5px;
-  color: var(--text-muted);
   display: flex;
   gap: 14px;
+}
+
+.csheet-action-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.csheet-comment-translation {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* 답글 — 부모 댓글 아래로 살짝 들여쓰고, 아바타도 조금 작게 */
+.csheet-reply {
+  margin-left: 34px;
+}
+
+.csheet-reply .csheet-comment-avatar {
+  width: 26px;
+  height: 26px;
+  font-size: 11px;
 }
 
 .csheet-comment-like {
@@ -311,6 +336,36 @@
   font-size: 14px;
   text-align: center;
   padding: 24px 0;
+}
+
+.comment-reply-banner {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--bg-soft);
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* .comment-reply-banner의 display:flex가 author 스타일이라 브라우저 기본
+   [hidden] { display:none } 규칙보다 우선순위가 높아져 그냥 두면 hidden이어도
+   보여버려요 — 이 코드베이스의 다른 오버레이(.action-overlay[hidden] 등)와
+   똑같은 방식으로 명시적으로 다시 숨겨줍니다. */
+.comment-reply-banner[hidden] {
+  display: none !important;
+}
+
+.comment-reply-banner button {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
 }
 
 .comment-input-bar {

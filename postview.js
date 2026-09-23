@@ -151,6 +151,9 @@ const btnCommentSend = document.getElementById("btnCommentSend");
 const commentDeleteConfirm = document.getElementById("commentDeleteConfirm");
 const btnConfirmCommentDelete = document.getElementById("btnConfirmCommentDelete");
 const btnCancelCommentDelete = document.getElementById("btnCancelCommentDelete");
+const commentReplyBanner = document.getElementById("commentReplyBanner");
+const commentReplyBannerText = document.getElementById("commentReplyBannerText");
+const btnCancelReply = document.getElementById("btnCancelReply");
 
 // 요소를 꾹 누르고 있으면(마우스든 터치든) onLongPress를 호출해요. 누르다가
 // 손가락/마우스가 움직이거나 일찍 떼면 취소됩니다.
@@ -178,22 +181,33 @@ function attachLongPress(el, onLongPress) {
   el.addEventListener("touchmove", cancel);
 }
 
-// 삭제 확인창에 띄울 "지금 삭제하려는 댓글"을 기억해둬요.
+// 삭제 확인창에 띄울 "지금 삭제하려는 댓글"을 기억해둬요. 답글이면 부모 댓글도
+// 같이 기억해둬서(답글은 post.comments가 아니라 부모의 replies 배열 안에 있어요)
+// 어디서 지워야 할지 알 수 있게 해요.
 let pendingDeleteComment = null;
+let pendingDeleteParent = null;
 
-function openCommentDeleteConfirm(comment) {
+function openCommentDeleteConfirm(comment, parentComment) {
   pendingDeleteComment = comment;
+  pendingDeleteParent = parentComment || null;
   commentDeleteConfirm.hidden = false;
 }
 
 function closeCommentDeleteConfirm() {
   pendingDeleteComment = null;
+  pendingDeleteParent = null;
   commentDeleteConfirm.hidden = true;
 }
 
 btnConfirmCommentDelete.addEventListener("click", () => {
   if (!pendingDeleteComment) return;
-  post.comments = post.comments.filter((c) => c !== pendingDeleteComment);
+  if (pendingDeleteParent) {
+    pendingDeleteParent.replies = (pendingDeleteParent.replies || []).filter(
+      (c) => c !== pendingDeleteComment
+    );
+  } else {
+    post.comments = post.comments.filter((c) => c !== pendingDeleteComment);
+  }
   updatePost(post.id, { comments: post.comments });
   closeCommentDeleteConfirm();
   renderComments();
@@ -204,6 +218,121 @@ btnCancelCommentDelete.addEventListener("click", closeCommentDeleteConfirm);
 commentDeleteConfirm.addEventListener("click", (e) => {
   if (e.target === commentDeleteConfirm) closeCommentDeleteConfirm();
 });
+
+// 한글이 대부분인 텍스트는(예: 내가 한국어로 쓴 댓글) 번역해봐야 의미가 없어서
+// "번역 보기"를 아예 숨겨요.
+function isMostlyKorean(text) {
+  const hangul = (text.match(/[가-힣]/g) || []).length;
+  return text.length > 0 && hangul / text.length > 0.3;
+}
+
+// 댓글 한 줄(최상위 댓글이든 답글이든 똑같은 모양)을 만들어요. replyTargetComment는
+// "답글 달기"를 눌렀을 때 실제로 답글이 들어갈 최상위 댓글이에요 — 답글에 또
+// 답글을 달아도 인스타그램처럼 한 단계로 합쳐서 같은 스레드에 쌓여요.
+function buildCommentRow(comment, replyTargetComment, isReply) {
+  const row = document.createElement("div");
+  row.className = isReply ? "csheet-comment csheet-reply" : "csheet-comment";
+
+  const avatar = document.createElement("span");
+  avatar.className = "csheet-comment-avatar";
+  avatar.textContent = displayName(comment.username)[0].toUpperCase();
+  avatar.style.background = avatarColor(comment.username);
+  avatar.style.color = "#fff";
+  row.appendChild(avatar);
+
+  const body = document.createElement("div");
+  body.className = "csheet-comment-body";
+
+  const meta = document.createElement("div");
+  meta.className = "csheet-comment-meta";
+  const b = document.createElement("b");
+  b.textContent = displayName(comment.username);
+  meta.appendChild(b);
+  if (comment.timeLabel) {
+    const time = document.createElement("span");
+    time.textContent = comment.timeLabel;
+    meta.appendChild(time);
+  }
+  body.appendChild(meta);
+
+  const text = document.createElement("div");
+  text.className = "csheet-comment-text";
+  text.textContent = comment.text;
+  body.appendChild(text);
+
+  const translationEl = document.createElement("div");
+  translationEl.className = "csheet-comment-translation";
+  translationEl.hidden = true;
+  body.appendChild(translationEl);
+
+  const actions = document.createElement("div");
+  actions.className = "csheet-comment-actions";
+
+  const replyBtn = document.createElement("button");
+  replyBtn.type = "button";
+  replyBtn.className = "csheet-action-link";
+  replyBtn.textContent = "답글 달기";
+  replyBtn.addEventListener("click", () => startReply(replyTargetComment));
+  actions.appendChild(replyBtn);
+
+  if (!isMostlyKorean(comment.text)) {
+    let translated = null;
+    const translateBtn = document.createElement("button");
+    translateBtn.type = "button";
+    translateBtn.className = "csheet-action-link";
+    translateBtn.textContent = "번역 보기";
+    translateBtn.addEventListener("click", async () => {
+      if (!translationEl.hidden) {
+        translationEl.hidden = true;
+        translateBtn.textContent = "번역 보기";
+        return;
+      }
+      if (translated) {
+        translationEl.textContent = translated;
+        translationEl.hidden = false;
+        translateBtn.textContent = "번역 숨기기";
+        return;
+      }
+      translateBtn.disabled = true;
+      translateBtn.textContent = "번역 중...";
+      const result = await translateText(comment.text, "en", "ko");
+      translateBtn.disabled = false;
+      if (!isUsableTranslation(comment.text, result)) {
+        translateBtn.textContent = "번역 보기";
+        showToast("번역에 실패했어요. 잠시 후 다시 시도해 주세요.");
+        return;
+      }
+      translated = result;
+      translationEl.textContent = translated;
+      translationEl.hidden = false;
+      translateBtn.textContent = "번역 숨기기";
+    });
+    actions.appendChild(translateBtn);
+  }
+
+  body.appendChild(actions);
+  row.appendChild(body);
+
+  const likeBtn = document.createElement("button");
+  likeBtn.className = "csheet-comment-like";
+  if (comment.liked) likeBtn.classList.add("is-liked");
+  likeBtn.setAttribute("aria-label", "댓글 좋아요");
+  likeBtn.innerHTML =
+    '<svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.6-9.6-9.3C.9 7.8 2.6 4.5 6 4c2-.3 3.7.7 6 3 2.3-2.3 4-3.3 6-3 3.4.5 5.1 3.8 3.6 7.2-2.1 4.7-9.6 9.3-9.6 9.3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+  likeBtn.addEventListener("click", () => {
+    comment.liked = !comment.liked;
+    likeBtn.classList.toggle("is-liked", comment.liked);
+    updatePost(post.id, { comments: post.comments });
+  });
+  row.appendChild(likeBtn);
+
+  // 내가 쓴 댓글/답글만 꾹 누르면 삭제할 수 있어요 — 다른 사람 댓글은 지울 수 없어요.
+  if (comment.username === "dorina") {
+    attachLongPress(row, () => openCommentDeleteConfirm(comment, isReply ? replyTargetComment : null));
+  }
+
+  return row;
+}
 
 function renderCommentSheetList() {
   commentSheetList.innerHTML = "";
@@ -217,71 +346,43 @@ function renderCommentSheetList() {
   }
 
   post.comments.forEach((comment) => {
-    const row = document.createElement("div");
-    row.className = "csheet-comment";
-
-    const avatar = document.createElement("span");
-    avatar.className = "csheet-comment-avatar";
-    avatar.textContent = displayName(comment.username)[0].toUpperCase();
-    avatar.style.background = avatarColor(comment.username);
-    avatar.style.color = "#fff";
-    row.appendChild(avatar);
-
-    const body = document.createElement("div");
-    body.className = "csheet-comment-body";
-
-    const meta = document.createElement("div");
-    meta.className = "csheet-comment-meta";
-    const b = document.createElement("b");
-    b.textContent = displayName(comment.username);
-    meta.appendChild(b);
-    if (comment.timeLabel) {
-      const time = document.createElement("span");
-      time.textContent = comment.timeLabel;
-      meta.appendChild(time);
-    }
-    body.appendChild(meta);
-
-    const text = document.createElement("div");
-    text.className = "csheet-comment-text";
-    text.textContent = comment.text;
-    body.appendChild(text);
-
-    // "답글 달기"·"번역 보기"는 아직 실제 기능이 연결되지 않은 디자인 요소예요
-    // (댓글 답글 스레드·번역 기능은 이 앱에 아직 없어요).
-    const actions = document.createElement("div");
-    actions.className = "csheet-comment-actions";
-    actions.innerHTML = "<span>답글 달기</span><span>번역 보기</span>";
-    body.appendChild(actions);
-
-    row.appendChild(body);
-
-    const likeBtn = document.createElement("button");
-    likeBtn.className = "csheet-comment-like";
-    if (comment.liked) likeBtn.classList.add("is-liked");
-    likeBtn.setAttribute("aria-label", "댓글 좋아요");
-    likeBtn.innerHTML =
-      '<svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.6-9.6-9.3C.9 7.8 2.6 4.5 6 4c2-.3 3.7.7 6 3 2.3-2.3 4-3.3 6-3 3.4.5 5.1 3.8 3.6 7.2-2.1 4.7-9.6 9.3-9.6 9.3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
-    likeBtn.addEventListener("click", () => {
-      comment.liked = !comment.liked;
-      likeBtn.classList.toggle("is-liked", comment.liked);
-      updatePost(post.id, { comments: post.comments });
+    commentSheetList.appendChild(buildCommentRow(comment, comment, false));
+    (comment.replies || []).forEach((reply) => {
+      commentSheetList.appendChild(buildCommentRow(reply, comment, true));
     });
-    row.appendChild(likeBtn);
-
-    // 내가 쓴 댓글만 꾹 누르면 삭제할 수 있어요 — 다른 사람 댓글은 지울 수 없어요.
-    if (comment.username === "dorina") {
-      attachLongPress(row, () => openCommentDeleteConfirm(comment));
-    }
-
-    commentSheetList.appendChild(row);
   });
 }
+
+// ---------- 답글 달기 ----------
+// 지금 답글을 다는 대상(최상위 댓글). null이면 새 최상위 댓글을 쓰는 중이에요.
+let replyingTo = null;
+
+function startReply(targetComment) {
+  replyingTo = targetComment;
+  commentReplyBannerText.textContent = `${displayName(targetComment.username)}님에게 답글 남기는 중`;
+  commentReplyBanner.hidden = false;
+  commentInput.value = `@${displayName(targetComment.username)} `;
+  commentInput.focus();
+  const len = commentInput.value.length;
+  commentInput.setSelectionRange(len, len);
+}
+
+function cancelReply() {
+  replyingTo = null;
+  commentReplyBanner.hidden = true;
+}
+
+btnCancelReply.addEventListener("click", () => {
+  cancelReply();
+  commentInput.value = "";
+});
 
 function openCommentSheet() {
   const myName = getCurrentUserName();
   commentInputAvatar.textContent = myName[0].toUpperCase();
   commentInputAvatar.style.background = avatarColor("dorina");
+  cancelReply();
+  commentInput.value = "";
   renderCommentSheetList();
   commentOverlay.hidden = false;
   // 시트가 올라오는 애니메이션이 끝난 뒤 포커스를 줘야 자연스러워서 한 틱 미뤄요.
@@ -295,9 +396,15 @@ function closeCommentSheet() {
 function submitComment() {
   const text = commentInput.value.trim();
   if (!text) return;
-  const newComment = { username: "dorina", text, liked: false, timeLabel: "방금" };
-  post.comments.unshift(newComment);
+  const newComment = { username: "dorina", text, liked: false, timeLabel: "방금", replies: [] };
+  if (replyingTo) {
+    if (!replyingTo.replies) replyingTo.replies = [];
+    replyingTo.replies.push(newComment);
+  } else {
+    post.comments.unshift(newComment);
+  }
   updatePost(post.id, { comments: post.comments });
+  cancelReply();
   commentInput.value = "";
   renderComments();
   renderCommentSheetList();

@@ -6,7 +6,7 @@
 <title>단어 — 게시물</title>
 <link rel="stylesheet" href="styles.css?v=1" />
 <link rel="stylesheet" href="dictionary.css?v=2" />
-<link rel="stylesheet" href="post.css?v=4" />
+<link rel="stylesheet" href="post.css?v=6" />
 </head>
 <body class="dict-body">
   <div class="dict-page post-page" id="postPage">
@@ -139,6 +139,10 @@
       <div class="sheet-handle"></div>
       <div class="comment-sheet-header">댓글</div>
       <div class="comment-sheet-list" id="commentSheetList"></div>
+      <div class="comment-reply-banner" id="commentReplyBanner" hidden>
+        <span id="commentReplyBannerText"></span>
+        <button type="button" id="btnCancelReply" aria-label="답글 취소">✕</button>
+      </div>
       <div class="comment-input-bar">
         <span class="comment-input-avatar" id="commentInputAvatar"></span>
         <input
@@ -168,6 +172,6 @@
   <script src="posts-store.js?v=5"></script>
   <script src="speak.js?v=5"></script>
   <script src="dictdata.js?v=19"></script>
-  <script src="postview.js?v=14"></script>
+  <script src="postview.js?v=15"></script>
 </body>
 </html>
