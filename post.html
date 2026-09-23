@@ -6,7 +6,7 @@
 <title>단어 — 게시물</title>
 <link rel="stylesheet" href="styles.css?v=1" />
 <link rel="stylesheet" href="dictionary.css?v=2" />
-<link rel="stylesheet" href="post.css?v=2" />
+<link rel="stylesheet" href="post.css?v=4" />
 </head>
 <body class="dict-body">
   <div class="dict-page post-page" id="postPage">
@@ -133,9 +133,41 @@
     </div>
   </div>
 
+  <!-- Comment sheet -->
+  <div class="action-overlay" id="commentOverlay" hidden>
+    <div class="comment-sheet">
+      <div class="sheet-handle"></div>
+      <div class="comment-sheet-header">댓글</div>
+      <div class="comment-sheet-list" id="commentSheetList"></div>
+      <div class="comment-input-bar">
+        <span class="comment-input-avatar" id="commentInputAvatar"></span>
+        <input
+          type="text"
+          id="commentInput"
+          class="comment-input"
+          placeholder="회원님의 생각을 남겨보세요."
+          aria-label="댓글 입력"
+          autocomplete="off"
+        />
+        <button class="comment-send" id="btnCommentSend" aria-label="댓글 보내기">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 12 20 4l-6 16-3-7-7-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comment delete confirmation (내가 쓴 댓글을 꾹 눌렀을 때) -->
+  <div class="confirm-overlay" id="commentDeleteConfirm" hidden>
+    <div class="confirm-dialog">
+      <p class="confirm-message">댓글을 삭제하시겠어요?</p>
+      <button class="confirm-btn confirm-btn--danger" id="btnConfirmCommentDelete">삭제</button>
+      <button class="confirm-btn" id="btnCancelCommentDelete">취소</button>
+    </div>
+  </div>
+
   <script src="posts-store.js?v=5"></script>
   <script src="speak.js?v=5"></script>
   <script src="dictdata.js?v=19"></script>
-  <script src="postview.js?v=12"></script>
+  <script src="postview.js?v=14"></script>
 </body>
 </html>

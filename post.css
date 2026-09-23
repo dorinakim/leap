@@ -183,6 +183,193 @@
   fill: #e0245e;
 }
 
+/* ---------- Comment sheet (아래에서 올라오는 댓글 창) ---------- */
+.comment-sheet {
+  width: 100%;
+  max-width: 520px;
+  height: 78vh;
+  max-height: 640px;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: comment-sheet-up 0.28s ease;
+}
+
+@keyframes comment-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.comment-sheet-header {
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  padding: 4px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.comment-sheet-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.csheet-comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 4px;
+  margin: -4px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+/* 내가 쓴 댓글을 꾹 누르고 있는 동안(삭제 확인이 뜨기 전) 눌리는 느낌을 줘요. */
+.csheet-comment.is-pressing {
+  background: var(--bg-soft);
+}
+
+.csheet-comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--bg-soft);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.csheet-comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.csheet-comment-meta {
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.csheet-comment-meta b {
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.csheet-comment-meta span {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.csheet-comment-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.csheet-comment-actions {
+  margin-top: 5px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  display: flex;
+  gap: 14px;
+}
+
+.csheet-comment-like {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.csheet-comment-like svg {
+  width: 15px;
+  height: 15px;
+}
+
+.csheet-comment-like.is-liked {
+  color: #e0245e;
+}
+
+.csheet-comment-like.is-liked svg path {
+  fill: #e0245e;
+}
+
+.comment-sheet-empty {
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.comment-input-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+}
+
+.comment-input-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comment-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: var(--bg-soft);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--text);
+  min-width: 0;
+}
+
+.comment-input::placeholder {
+  color: var(--text-muted);
+}
+
+.comment-send {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comment-send svg {
+  width: 17px;
+  height: 17px;
+}
+
 /* ---------- Not found ---------- */
 .post-notfound {
   flex: 1;
