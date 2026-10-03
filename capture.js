@@ -100,6 +100,52 @@ function initAlbumThumb() {
   }
 }
 
+/* ---------- 사진 크기 줄이기 ----------
+   이 앱은 사진을 data URL 문자열로 브라우저 저장소(localStorage)에 넣는데, 저장소엔
+   한도가 있어요(아이폰 사파리는 전체 약 5MB 이하). 앨범에서 고른 원본 사진은 보통 수 MB라
+   저장에 실패해서 "공유했는데 홈에 안 보이는" 문제가 생겼어요. 그래서 저장 전에 긴 변을
+   MAX_PHOTO_SIDE로 줄이고 JPEG로 다시 압축해요 (피드에 보이는 크기엔 충분해요). */
+const MAX_PHOTO_SIDE = 1080;
+const PHOTO_JPEG_QUALITY = 0.8;
+
+// source(이미지/비디오 요소)를 줄여서 JPEG data URL로 돌려줘요.
+function encodePhoto(source, srcW, srcH) {
+  const scale = Math.min(1, MAX_PHOTO_SIDE / Math.max(srcW, srcH));
+  const w = Math.max(1, Math.round(srcW * scale));
+  const h = Math.max(1, Math.round(srcH * scale));
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  // 투명 PNG도 JPEG로 바꾸면 투명 부분이 까맣게 나오니까 흰 배경을 먼저 깔아요.
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(source, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", PHOTO_JPEG_QUALITY);
+}
+
+// 앨범에서 고른 사진 파일을 줄여서 data URL로 돌려줘요. (파일을 통째로 base64로
+// 바꾸지 않고 object URL로 바로 디코딩해서, 큰 사진도 메모리를 덜 써요.)
+function prepareAlbumPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        resolve(encodePhoto(img, img.naturalWidth, img.naturalHeight));
+      } catch (e) {
+        reject(e);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("image decode failed"));
+    };
+    img.src = url;
+  });
+}
+
 async function startCamera() {
   stopCamera();
   try {
@@ -152,17 +198,12 @@ function showPreview(src, mediaType) {
 
 function capturePhoto() {
   if (!currentStream) return;
-  const w = video.videoWidth;
-  const h = video.videoHeight;
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(video, 0, 0, w, h);
+  const dataUrl = encodePhoto(video, video.videoWidth, video.videoHeight);
 
   flashOverlay.classList.add("is-flashing");
   setTimeout(() => flashOverlay.classList.remove("is-flashing"), 250);
 
-  showPreview(canvas.toDataURL("image/jpeg", 0.92), "image");
+  showPreview(dataUrl, "image");
 }
 
 function startRecording() {
@@ -283,10 +324,14 @@ btnUsePhoto.addEventListener("click", () => {
 deviceFileInput.addEventListener("change", async () => {
   const file = deviceFileInput.files[0];
   if (!file) return;
-  const mediaType = file.type.startsWith("video/") ? "video" : "image";
-  const dataUrl = await blobToDataUrl(file);
-  showPreview(dataUrl, mediaType);
   deviceFileInput.value = "";
+  try {
+    // 원본 그대로 저장하면 용량 때문에 등록이 실패할 수 있어서, 줄여서 사용해요.
+    showPreview(await prepareAlbumPhoto(file), "image");
+  } catch (e) {
+    console.warn("album photo load failed:", e);
+    showToast("이 사진을 불러올 수 없어요. 다른 사진을 골라 주세요.");
+  }
 });
 
 initAlbumThumb();

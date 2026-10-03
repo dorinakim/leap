@@ -27,6 +27,19 @@ const btnBack = document.getElementById("btnBack");
 const btnSpeak = document.getElementById("btnSpeak");
 const btnShare = document.getElementById("btnShare");
 
+function showToast(message) {
+  let toast = document.querySelector(".toast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.className = "toast";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add("is-visible");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.remove("is-visible"), 3200);
+}
+
 const koreanWord = sessionStorage.getItem("leaf:selectedWord") || "사과";
 const photoSrc = sessionStorage.getItem("leaf:capturedPhoto") || "assets/demo-apple.png";
 const capturedMediaType = sessionStorage.getItem("leaf:capturedMediaType") || "image";
@@ -114,7 +127,11 @@ btnShare.addEventListener("click", () => {
     examples: collectExamples(examplesEl),
     conversation: collectConversation(conversationEl),
   });
-  addPost(post);
+  if (!addPost(post)) {
+    // 저장 공간이 모자라서 등록하지 못했어요 — 성공한 척 홈으로 보내지 않고 알려줘요.
+    showToast("저장 공간이 부족해서 등록하지 못했어요. 이전 게시물을 정리한 뒤 다시 시도해 주세요.");
+    return;
+  }
   sessionStorage.removeItem("leaf:capturedPhoto");
   sessionStorage.removeItem("leaf:selectedWord");
   sessionStorage.removeItem("leaf:selectedWordEn");

@@ -56,8 +56,9 @@
     </footer>
 
     <!-- 앨범 아이콘을 누르면 디자인 목업 그리드 대신, 바로 이 input이 열려서
-         실제 기기의 사진/동영상 라이브러리에서 고를 수 있어요. -->
-    <input type="file" id="deviceFileInput" accept="image/*,video/*" hidden />
+         실제 기기의 사진 라이브러리에서 고를 수 있어요. (베타는 사진만 지원해요 —
+         영상은 용량이 커서 브라우저 저장소에 저장할 수 없어요.) -->
+    <input type="file" id="deviceFileInput" accept="image/*" hidden />
 
     <!-- Captured / selected photo preview -->
     <section class="preview-view" id="previewView" hidden>
@@ -72,6 +73,6 @@
 
   <canvas id="captureCanvas" hidden></canvas>
 
-  <script src="capture.js?v=3"></script>
+  <script src="capture.js?v=4"></script>
 </body>
 </html>

@@ -10,11 +10,32 @@ function getPosts() {
   }
 }
 
+// 번역/사전 결과를 빨리 보여주려고 쌓아두는 캐시들 — 지워도 다음에 다시 만들어지니까,
+// 저장 공간이 모자랄 때 가장 먼저 비워도 안전해요.
+const REGENERABLE_CACHE_KEYS = ["leaf:postLangCacheV2", "leaf:translitCacheV2"];
+
+// 저장에 성공하면 true, 공간 부족 등으로 실패하면 false를 돌려줘요.
+// (예전엔 실패를 조용히 삼켜서, 등록이 안 됐는데도 성공한 것처럼 보였어요.)
 function savePosts(posts) {
+  const json = JSON.stringify(posts);
   try {
-    localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+    localStorage.setItem(POSTS_KEY, json);
+    return true;
   } catch (e) {
-    /* storage unavailable or full */
+    // 공간이 모자라면 다시 만들 수 있는 캐시부터 비우고 한 번 더 시도해요.
+    REGENERABLE_CACHE_KEYS.forEach((k) => {
+      try {
+        localStorage.removeItem(k);
+      } catch (e2) {
+        /* ignore */
+      }
+    });
+    try {
+      localStorage.setItem(POSTS_KEY, json);
+      return true;
+    } catch (e3) {
+      return false;
+    }
   }
 }
 
@@ -45,10 +66,11 @@ function avatarColor(username) {
   return `hsl(${hue}, 55%, 45%)`;
 }
 
+// 저장에 성공했는지(true/false)를 돌려줘요 — 호출하는 쪽에서 실패를 알려줄 수 있게요.
 function addPost(post) {
   const posts = getPosts();
   posts.unshift(post);
-  savePosts(posts);
+  return savePosts(posts);
 }
 
 function deletePost(id) {
