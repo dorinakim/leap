@@ -1,23 +1,31 @@
-// notice.js — 앱을 쓰는 동안 일정 시간마다 화면 위에서 내려오는 알림 배너 (데모용)
+// notice.js — 홈·피드·마이페이지를 구경하는 중에 가끔 위에서 내려오는 알림 배너 (데모용)
 //
-// - NOTICE_INTERVAL_MS 마다 아래 MESSAGES 중 하나를 무작위로 보여줘요 (직전과 같은 문구는 피해요).
-// - 이 앱은 화면을 옮길 때마다 페이지가 새로 로드돼서 페이지 안 타이머만 쓰면 이동할 때마다
-//   시간이 리셋돼요. 그래서 "다음 알림 시각"을 localStorage에 저장해서 화면을 오가도 이어져요.
-// - 홈·피드·마이페이지·게시물 화면에서만 켜요 (사진 찍기/단어 고르기 도중엔 방해돼서 제외).
-// - 위에서 아래로 내려오고, 내려온 뒤 VISIBLE_MS(3초) 동안 머물다가 다시 위로 올라가며 사라져요.
-//   배너를 누르면 바로 올라가요.
-// - 내려올 때 벨소리가 나고(웹 오디오), 진동을 지원하는 기기에선 진동도 울려요.
+// 언제 울리나요?
+// - "아무 조작도 하지 않은 상태"가 2~3분(알림마다 2분~3분 사이에서 무작위) 이어지면 울려요.
+//   탭·스크롤·글자 입력 같은 조작을 하면 시간을 처음부터 다시 세요. 화면을 옮기는 것도 조작이라
+//   화면마다 새로 시작하고, 다른 앱에 갔다가 돌아오는 것도 조작으로 봐요.
+// - 울린 뒤에도 계속 가만히 있으면 다시 2~3분 뒤에 울려요.
+// - 홈·피드·마이페이지에서만 울려요. 사진을 올리는 화면(카메라·단어 선택·사전·수정)과
+//   게시물 상세, 온보딩에선 이 파일을 불러오지 않아요.
+// - 위 세 화면 안에서도 댓글창·더보기 같은 팝업이 열려 있거나 글자를 입력하는 중이면 울리지
+//   않아요 (isUserBusy). 그런 상태는 "조작 중"으로 보고, 끝난 뒤부터 다시 2~3분을 세요.
+//
+// 어떻게 보이나요?
+// - 위에서 아래로 내려오면서 벨이 울리고(진동을 지원하는 기기에선 진동도), 울린 지 3초 뒤에
+//   다시 위로 올라가며 사라져요. 배너를 누르면 바로 올라가요. 문구는 3개 중 무작위예요.
 //   * 브라우저는 "사용자가 화면을 한 번이라도 탭한 뒤"에만 소리/진동을 허용해요(자동재생 정책).
 //   * 웹에서는 폰의 무음/진동 모드를 읽을 수 없어요. 아이폰은 무음 스위치를 켜면 웹 오디오가
 //     자동으로 꺼지지만, 아이폰은 웹에서 진동을 낼 수 없어요(안드로이드 크롬은 가능).
-// - 폰에서 바로 확인하고 싶으면 주소 뒤에 ?notice=3 을 붙여 열어보세요 (3초 뒤에 알림이 떠요).
+//
+// 폰에서 빨리 확인하려면: 주소 뒤에 ?notice=5 를 붙여 열고, 화면을 한 번 탭한 뒤 5초 동안
+//   가만히 계세요 (조작 없이 5초 지나면 울려요). 되돌리려면 ?notice=off 로 한 번 여세요.
 (function () {
-  const NOTICE_INTERVAL_MS = 2 * 60 * 1000; // 알림 간격 (테스트로 빨리 보고 싶으면 줄이세요)
-  const SLIDE_MS = 400; // 위에서 내려오는 데 걸리는 시간
-  const VISIBLE_MS = 3000; // 다 내려온 뒤 머무는 시간 → 이후 다시 위로 올라가요
+  const IDLE_MIN_MS = 2 * 60 * 1000; // 무조작 시간의 하한: 2분
+  const IDLE_MAX_MS = 3 * 60 * 1000; // 무조작 시간의 상한: 3분 (이 사이에서 무작위)
+  const VISIBLE_MS = 3000; // 울린(=내려오기 시작한) 뒤 이 시간이 지나면 위로 올라가요
   const LEAVE_MS = 450; // 올라가는 애니메이션이 끝나 DOM에서 지우기까지의 시간
   const VIBRATE_PATTERN = [200, 100, 200]; // 진동: 웅-쉬-웅
-  const NEXT_AT_KEY = "leaf:noticeNextAt";
+  const IDLE_OVERRIDE_KEY = "leaf:noticeIdleSec"; // 테스트용 (?notice=5) — 이 탭에서만 유지
   const LAST_MSG_KEY = "leaf:noticeLastIndex";
 
   const MESSAGES = [
@@ -101,43 +109,32 @@
     document.head.appendChild(style);
   }
 
-  // ---------- 다음 알림 시각 (localStorage에 저장해서 화면을 옮겨도 이어져요) ----------
-  let memoryNextAt = 0; // 저장소를 못 쓰는 환경을 위한 대비
+  // ---------- 무조작 시간 재기 ----------
+  // "마지막으로 조작한 시각"을 기억해두고, 거기서부터 정해진 시간(2~3분)이 지나면 알림을 띄워요.
+  // 화면을 옮기면 페이지가 새로 로드되면서 이 값도 새로 시작해요(화면을 옮기는 것 자체가 조작이라서
+  // 저장해서 이어갈 필요가 없어요).
+  let lastActivityAt = Date.now();
 
-  function readNextAt() {
+  // 이번 알림을 띄우기까지 필요한 무조작 시간. 알림마다 2~3분 사이에서 무작위로 정해요.
+  function pickIdleMs() {
+    // 테스트용: ?notice=5 로 열면 이 탭에서는 "5초 무조작"으로 바뀌어요. ?notice=off 로 되돌려요.
+    const m = /[?&]notice=(\d+|off)/.exec(location.search);
     try {
-      return Number(localStorage.getItem(NEXT_AT_KEY)) || 0;
+      if (m) {
+        if (m[1] === "off") sessionStorage.removeItem(IDLE_OVERRIDE_KEY);
+        else sessionStorage.setItem(IDLE_OVERRIDE_KEY, m[1]);
+      }
+      const sec = Number(sessionStorage.getItem(IDLE_OVERRIDE_KEY));
+      if (sec > 0) return sec * 1000;
     } catch (e) {
-      return memoryNextAt;
+      /* sessionStorage를 못 써도 기본 동작(2~3분)으로 가요 */
     }
+    return IDLE_MIN_MS + Math.random() * (IDLE_MAX_MS - IDLE_MIN_MS);
   }
+  let idleNeededMs = pickIdleMs();
 
-  function writeNextAt(t) {
-    memoryNextAt = t;
-    try {
-      localStorage.setItem(NEXT_AT_KEY, String(t));
-    } catch (e) {
-      /* 저장소를 못 써도 이 페이지 안에서는 메모리 값으로 동작해요 */
-    }
-  }
-
-  function scheduleNext() {
-    writeNextAt(Date.now() + NOTICE_INTERVAL_MS);
-  }
-
-  // 페이지가 열릴 때: 저장된 시각이 "앞으로 NOTICE_INTERVAL_MS 이내"면 이어서 쓰고, 없거나
-  // 이미 지났으면(앱을 한참 닫아뒀다 다시 연 경우 등) 열자마자 알림이 튀어나오지 않도록
-  // 지금부터 새로 센다.
-  function initSchedule() {
-    // 테스트용: 주소 뒤에 ?notice=3 을 붙여 열면 3초 뒤에 알림이 떠요 (폰에서 벨·진동 확인용).
-    const m = /[?&]notice=(\d+)/.exec(location.search);
-    if (m) {
-      writeNextAt(Date.now() + Math.min(Number(m[1]), NOTICE_INTERVAL_MS / 1000) * 1000);
-      return;
-    }
-    const t = readNextAt();
-    const now = Date.now();
-    if (!(t > now && t <= now + NOTICE_INTERVAL_MS + 1000)) scheduleNext();
+  function markActivity() {
+    lastActivityAt = Date.now();
   }
 
   // ---------- 문구 고르기 ----------
@@ -294,24 +291,63 @@
     playBell();
     vibrate();
 
-    // 다 내려온 뒤 VISIBLE_MS(3초) 동안 보여주고 → 다시 위로 올라가며 사라져요.
-    current = { el, timer: setTimeout(dismiss, SLIDE_MS + VISIBLE_MS) };
+    // 울린(=내려오기 시작한) 지 VISIBLE_MS(3초)가 지나면 다시 위로 올라가며 사라져요.
+    current = { el, timer: setTimeout(dismiss, VISIBLE_MS) };
   }
 
-  // ---------- 1초마다 "알림 시간이 됐나?" 확인 ----------
-  function tick() {
-    if (document.hidden) return; // 안 보이는 탭에선 띄우지 않고, 다시 보일 때 띄워요
-    if (Date.now() >= readNextAt()) {
-      scheduleNext(); // 먼저 다음 시각을 잡아서, 다른 탭이 같은 알림을 또 띄우지 않게 해요
-      showNotice();
-    }
+  // ---------- "지금 뭔가 하는 중이라 방해하면 안 되는 상태"인가? ----------
+  // 팝업(댓글창·더보기·삭제 확인)이 열려 있거나 글자를 입력하는 중이면 "하는 중"이에요.
+  // 사진을 올리는 화면(카메라·단어 선택·사전·수정)은 아예 이 파일을 불러오지 않아요.
+  const BUSY_OVERLAY_SELECTOR =
+    ".sheet-overlay:not([hidden]), .action-overlay:not([hidden]), .confirm-overlay:not([hidden])";
+
+  function isUserBusy() {
+    if (document.querySelector(BUSY_OVERLAY_SELECTOR)) return true; // 팝업(댓글창 등)이 열려 있음
+    const a = document.activeElement;
+    // 글자를 입력하는 중 (댓글, 검색어 등)
+    return !!a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.isContentEditable);
   }
 
-  initSchedule();
-  setInterval(tick, 1000);
+  // ---------- 조작 감지: 뭔가 하면 무조작 시간을 처음부터 다시 세요 ----------
+  // 탭·스크롤·글자 입력·마우스 움직임 모두 "조작"이에요. 이벤트는 가볍게 시각만 기록해요.
+  ["pointerdown", "pointermove", "touchstart", "touchmove", "wheel", "keydown", "click"].forEach((ev) =>
+    document.addEventListener(ev, markActivity, { capture: true, passive: true })
+  );
+  // 스크롤은 버블링되지 않아서 capture로 받아야 안쪽 목록 스크롤도 잡혀요.
+  window.addEventListener("scroll", markActivity, { capture: true, passive: true });
+
+  // 다른 앱에 갔다가 돌아오면 그것도 조작으로 봐요 — 안 그러면 그동안 쌓인 시간 때문에
+  // 돌아오자마자 알림이 튀어나와요.
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) tick();
+    if (!document.hidden) markActivity();
   });
+
+  // ---------- 1초마다 "가만히 있은 지 충분히 됐나?" 확인 ----------
+  function tick() {
+    if (document.hidden) return; // 안 보이는 탭에선 띄우지 않아요
+
+    // 팝업이 열려 있거나 입력 중이면 계속 "조작 중"으로 쳐요. 그 상태가 끝난 시점부터
+    // 다시 2~3분을 세니까, 댓글창을 닫자마자 알림이 튀어나오는 일이 없어요.
+    if (isUserBusy()) {
+      markActivity();
+      return;
+    }
+
+    if (Date.now() - lastActivityAt < idleNeededMs) return; // 아직 충분히 가만히 있지 않음
+
+    showNotice();
+    // 알림이 뜬 시점부터 다시 센다 → 계속 가만히 있으면 2~3분 뒤에 또 울려요.
+    markActivity();
+    idleNeededMs = pickIdleMs();
+  }
+
+  setInterval(tick, 1000);
+
+  try {
+    localStorage.removeItem("leaf:noticeNextAt"); // 예전(고정 주기 방식)이 남긴 값
+  } catch (e) {
+    /* ignore */
+  }
 
   // 데모/테스트에서 바로 확인하고 싶을 때 쓸 수 있게 열어둬요: leafNotice.showNow()
   window.leafNotice = {
@@ -322,5 +358,9 @@
     audioState: () => (audioCtx ? audioCtx.state : "locked(첫 탭 전)"),
     ringBell,
     vibrate,
+    idleState: () => ({
+      idleSec: Math.round((Date.now() - lastActivityAt) / 1000),
+      needSec: Math.round(idleNeededMs / 1000),
+    }),
   };
 })();
