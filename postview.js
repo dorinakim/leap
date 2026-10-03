@@ -105,12 +105,15 @@ function formatCount(n) {
 function renderLikes() {
   const likeBtn = document.getElementById("btnLike");
   likeBtn.classList.toggle("is-liked", post.likedByMe);
+  setActionCount(document.getElementById("likeCount"), post.likeCount);
   const firstCommenter = post.comments[0] ? displayName(post.comments[0].username) : "user";
   document.getElementById("postLikes").innerHTML =
     `Liked by <b>${firstCommenter}</b> and ${formatCount(post.likeCount)} others`;
 }
 
 function renderComments() {
+  // 댓글을 쓰거나 지울 때마다 이 함수가 다시 불리니까, 말풍선 옆 개수도 여기서 같이 갱신해요.
+  setActionCount(document.getElementById("commentCount"), getCommentCount(post));
   const wrap = document.getElementById("postComments");
   wrap.innerHTML = "";
   post.comments.forEach((comment, index) => {
