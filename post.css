@@ -309,6 +309,11 @@
   color: var(--text-muted);
 }
 
+/* 답글 맨 앞의 @멘션 — 어디까지가 계정 이름인지 보이게 파란색으로 */
+.comment-mention {
+  color: #3347d1;
+}
+
 .csheet-comment-translation {
   margin-top: 6px;
   font-size: 13px;

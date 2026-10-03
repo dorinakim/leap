@@ -232,6 +232,11 @@
   touch-action: none;
 }
 
+/* 답글 맨 앞의 @멘션 — 어디까지가 계정 이름인지 보이게 파란색으로 */
+.comment-mention {
+  color: #3347d1;
+}
+
 .comment-list {
   overscroll-behavior: contain;
   flex: 1;

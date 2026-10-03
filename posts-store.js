@@ -132,6 +132,54 @@ function getCommentCount(post) {
   return (post.comments || []).reduce((sum, c) => sum + 1 + (c.replies || []).length, 0);
 }
 
+// ---------- 댓글 본문의 @멘션 (피드 · 게시물 상세 공용) ----------
+// 답글 맨 앞의 "@아이디"는 색을 바꿔서, 어디까지가 계정 이름이고 어디부터가 내용인지
+// 한눈에 보이게 해요 (CSS의 .comment-mention).
+//  - comment.mention: 답글을 쓸 때 저장해둔 "멘션한 사람 이름". 글자만 보고 추측하면
+//    한글 이름이나 공백이 있는 이름("김 도리나")은 어디서 끝나는지 알 수 없어서, 저장해둔
+//    길이만큼만 정확히 색을 바꿔요.
+//  - 그 밖에 직접 입력한 @아이디(영문·숫자·점·밑줄)도 같은 색으로 보여줘요.
+function renderCommentText(el, comment) {
+  el.textContent = "";
+  let rest = comment.text || "";
+  const addText = (s) => {
+    if (s) el.appendChild(document.createTextNode(s));
+  };
+  const addMention = (s) => {
+    const span = document.createElement("span");
+    span.className = "comment-mention";
+    span.textContent = s;
+    el.appendChild(span);
+  };
+
+  if (comment.mention && rest.startsWith("@" + comment.mention)) {
+    addMention("@" + comment.mention);
+    rest = rest.slice(comment.mention.length + 1);
+  }
+
+  // 앞 글자가 아이디에 쓰이는 글자면(예: 이메일 a@b.com) 멘션이 아니에요.
+  const re = /(^|[^A-Za-z0-9._@])(@[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)/g;
+  let last = 0;
+  let m;
+  while ((m = re.exec(rest))) {
+    addText(rest.slice(last, m.index + m[1].length));
+    addMention(m[2]);
+    last = m.index + m[0].length;
+  }
+  addText(rest.slice(last));
+}
+
+// 댓글을 "맨 앞 멘션"과 "나머지 내용"으로 나눠요 — 번역할 땐 내용만 번역해야 @아이디가
+// 한글로 바뀌어 버리는 일이 없어요.
+function splitLeadingMention(comment) {
+  const text = comment.text || "";
+  if (comment.mention && text.startsWith("@" + comment.mention)) {
+    return { mention: "@" + comment.mention, body: text.slice(comment.mention.length + 1).trim() };
+  }
+  const m = text.match(/^(@[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\s*/);
+  return m ? { mention: m[1], body: text.slice(m[0].length) } : { mention: "", body: text };
+}
+
 // 아이콘 옆에 붙는 짧은 숫자 표기 (1,234 → 1.2천, 20,531 → 2.1만). 큰 숫자가
 // 아이콘 옆에서 길게 늘어나지 않도록 축약해요.
 const compactCountFormatter = (() => {

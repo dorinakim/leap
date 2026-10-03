@@ -125,7 +125,9 @@ function renderComments() {
     const b = document.createElement("b");
     b.textContent = displayName(comment.username);
     body.appendChild(b);
-    body.appendChild(document.createTextNode(comment.text));
+    const commentTextEl = document.createElement("span");
+    renderCommentText(commentTextEl, comment);
+    body.appendChild(commentTextEl);
     row.appendChild(body);
 
     const likeBtn = document.createElement("button");
@@ -260,7 +262,7 @@ function buildCommentRow(comment, replyTargetComment, isReply) {
 
   const text = document.createElement("div");
   text.className = "csheet-comment-text";
-  text.textContent = comment.text;
+  renderCommentText(text, comment);
   body.appendChild(text);
 
   const translationEl = document.createElement("div");
@@ -275,11 +277,27 @@ function buildCommentRow(comment, replyTargetComment, isReply) {
   replyBtn.type = "button";
   replyBtn.className = "csheet-action-link";
   replyBtn.textContent = "답글 달기";
-  replyBtn.addEventListener("click", () => startReply(replyTargetComment));
+  // 최상위 댓글이든 답글이든, 눌린 댓글 쓴 사람을 멘션해요 (답글은 같은 스레드에 쌓여요).
+  replyBtn.addEventListener("click", () => startReply(replyTargetComment, comment.username));
   actions.appendChild(replyBtn);
 
-  if (!isMostlyKorean(comment.text)) {
+  // 번역은 맨 앞 @멘션을 뺀 "내용"만 대상으로 해요 — 멘션까지 번역기에 넣으면 @아이디가
+  // 한글로 바뀌고, 멘션 때문에 한글 댓글 판정도 틀어져요.
+  const { mention: leadMention, body: translatableText } = splitLeadingMention(comment);
+  if (translatableText && !isMostlyKorean(translatableText)) {
     let translated = null;
+    const showTranslation = () => {
+      translationEl.textContent = "";
+      if (leadMention) {
+        const mentionSpan = document.createElement("span");
+        mentionSpan.className = "comment-mention";
+        mentionSpan.textContent = leadMention;
+        translationEl.appendChild(mentionSpan);
+        translationEl.appendChild(document.createTextNode(" "));
+      }
+      translationEl.appendChild(document.createTextNode(translated));
+      translationEl.hidden = false;
+    };
     const translateBtn = document.createElement("button");
     translateBtn.type = "button";
     translateBtn.className = "csheet-action-link";
@@ -291,23 +309,21 @@ function buildCommentRow(comment, replyTargetComment, isReply) {
         return;
       }
       if (translated) {
-        translationEl.textContent = translated;
-        translationEl.hidden = false;
+        showTranslation();
         translateBtn.textContent = "번역 숨기기";
         return;
       }
       translateBtn.disabled = true;
       translateBtn.textContent = "번역 중...";
-      const result = await translateText(comment.text, "en", "ko");
+      const result = await translateText(translatableText, "en", "ko");
       translateBtn.disabled = false;
-      if (!isUsableTranslation(comment.text, result)) {
+      if (!isUsableTranslation(translatableText, result)) {
         translateBtn.textContent = "번역 보기";
         showToast("번역에 실패했어요. 잠시 후 다시 시도해 주세요.");
         return;
       }
       translated = result;
-      translationEl.textContent = translated;
-      translationEl.hidden = false;
+      showTranslation();
       translateBtn.textContent = "번역 숨기기";
     });
     actions.appendChild(translateBtn);
@@ -359,12 +375,16 @@ function renderCommentSheetList() {
 // ---------- 답글 달기 ----------
 // 지금 답글을 다는 대상(최상위 댓글). null이면 새 최상위 댓글을 쓰는 중이에요.
 let replyingTo = null;
+// 답글 맨 앞에 붙는 @멘션 이름 — 답글이 쌓이는 스레드(replyingTo)와는 별개로, 실제로
+// "답글 달기"를 누른 그 댓글의 작성자예요.
+let replyMention = "";
 
-function startReply(targetComment) {
-  replyingTo = targetComment;
-  commentReplyBannerText.textContent = `${displayName(targetComment.username)}님에게 답글 남기는 중`;
+function startReply(threadComment, mentionUsername) {
+  replyingTo = threadComment;
+  replyMention = displayName(mentionUsername || threadComment.username);
+  commentReplyBannerText.textContent = `${replyMention}님에게 답글 남기는 중`;
   commentReplyBanner.hidden = false;
-  commentInput.value = `@${displayName(targetComment.username)} `;
+  commentInput.value = `@${replyMention} `;
   commentInput.focus();
   const len = commentInput.value.length;
   commentInput.setSelectionRange(len, len);
@@ -372,6 +392,7 @@ function startReply(targetComment) {
 
 function cancelReply() {
   replyingTo = null;
+  replyMention = "";
   commentReplyBanner.hidden = true;
 }
 
@@ -401,6 +422,9 @@ function submitComment() {
   if (!text) return;
   const newComment = { username: "dorina", text, liked: false, timeLabel: "방금", replies: [] };
   if (replyingTo) {
+    // 멘션한 이름을 같이 저장해두면, 한글 이름이나 공백이 있는 이름도 색을 정확한
+    // 길이만큼만 바꿀 수 있어요. (입력창의 @멘션을 지우고 쓴 경우엔 저장하지 않아요.)
+    if (replyMention && text.startsWith("@" + replyMention)) newComment.mention = replyMention;
     if (!replyingTo.replies) replyingTo.replies = [];
     replyingTo.replies.push(newComment);
   } else {

@@ -222,7 +222,7 @@ function renderComments() {
 
     const text = document.createElement("div");
     text.className = "comment-text";
-    text.textContent = comment.text;
+    renderCommentText(text, comment);
     body.appendChild(text);
 
     const translation = document.createElement("div");
