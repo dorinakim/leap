@@ -19,6 +19,8 @@
 //
 // 폰에서 빨리 확인하려면: 주소 뒤에 ?notice=5 를 붙여 열고, 화면을 한 번 탭한 뒤 5초 동안
 //   가만히 계세요 (조작 없이 5초 지나면 울려요). 되돌리려면 ?notice=off 로 한 번 여세요.
+// 안 울리는 이유를 확인하려면: 주소 뒤에 ?notice=debug 를 붙여 열면 화면 왼쪽 아래에 상태가
+//   실시간으로 보여요(가만히 있은 시간, 마지막 조작, 방해 상태, 소리). ?notice=off 로 끄세요.
 (function () {
   const IDLE_MIN_MS = 1 * 60 * 1000; // 무조작 시간의 하한: 1분
   const IDLE_MAX_MS = 2 * 60 * 1000; // 무조작 시간의 상한: 2분 (이 사이에서 무작위)
@@ -133,8 +135,10 @@
   }
   let idleNeededMs = pickIdleMs();
 
-  function markActivity() {
+  let lastActivityReason = "페이지 열림"; // 상태 표시(?notice=debug)용: 무엇 때문에 시간이 리셋됐나
+  function markActivity(e) {
     lastActivityAt = Date.now();
+    lastActivityReason = e && e.type ? e.type : typeof e === "string" ? e : "?";
   }
 
   // ---------- 문구 고르기 ----------
@@ -329,7 +333,7 @@
     // 팝업이 열려 있거나 입력 중이면 계속 "조작 중"으로 쳐요. 그 상태가 끝난 시점부터
     // 다시 1~2분을 세니까, 댓글창을 닫자마자 알림이 튀어나오는 일이 없어요.
     if (isUserBusy()) {
-      markActivity();
+      markActivity("팝업 열림/입력 중");
       return;
     }
 
@@ -337,11 +341,47 @@
 
     showNotice();
     // 알림이 뜬 시점부터 다시 센다 → 계속 가만히 있으면 1~2분 뒤에 또 울려요.
-    markActivity();
+    markActivity("알림 표시");
     idleNeededMs = pickIdleMs();
   }
 
   setInterval(tick, 1000);
+
+  // ---------- 상태 표시 (?notice=debug) ----------
+  // 폰에서 "왜 안 울리지?"를 눈으로 확인하려는 용도예요. 평소엔 꺼져 있어요.
+  //  - 무조작 시간이 기준(1~2분)까지 차오르는지, 가만히 있는데도 0으로 돌아간다면 어떤 입력
+  //    때문인지(마지막 조작), 팝업/입력 중이라 막힌 건 아닌지, 소리가 잠겨 있진 않은지 보여줘요.
+  const DEBUG_KEY = "leaf:noticeDebug";
+  (function setupDebugBadge() {
+    const m = /[?&]notice=(debug|off)/.exec(location.search);
+    try {
+      if (m && m[1] === "debug") sessionStorage.setItem(DEBUG_KEY, "1");
+      if (m && m[1] === "off") sessionStorage.removeItem(DEBUG_KEY);
+      if (sessionStorage.getItem(DEBUG_KEY) !== "1") return;
+    } catch (e) {
+      return;
+    }
+    const badge = document.createElement("div");
+    badge.style.cssText =
+      "position:fixed;left:8px;bottom:84px;z-index:2000;padding:8px 10px;border-radius:10px;" +
+      "background:rgba(0,0,0,.78);color:#fff;font:11px/1.45 ui-monospace,Menlo,monospace;" +
+      "pointer-events:none;white-space:pre;";
+    document.body.appendChild(badge);
+    const render = () => {
+      const idle = Math.round((Date.now() - lastActivityAt) / 1000);
+      const need = Math.round(idleNeededMs / 1000);
+      badge.textContent =
+        "알림 상태\n" +
+        "가만히 있은 시간: " + idle + "초 / 기준 " + need + "초" +
+        (sessionStorage.getItem(IDLE_OVERRIDE_KEY) ? "  ⚠ 테스트 설정(?notice=" + sessionStorage.getItem(IDLE_OVERRIDE_KEY) + ")" : "  (평소 1~2분)") + "\n" +
+        "마지막 조작: " + lastActivityReason + "\n" +
+        "방해 상태(팝업/입력): " + (isUserBusy() ? "예" : "아니오") + "\n" +
+        "화면 보임: " + (document.hidden ? "아니오" : "예") + "\n" +
+        "소리: " + (audioCtx ? audioCtx.state : "잠김(탭 필요)");
+    };
+    render();
+    setInterval(render, 500);
+  })();
 
   try {
     localStorage.removeItem("leaf:noticeNextAt"); // 예전(고정 주기 방식)이 남긴 값

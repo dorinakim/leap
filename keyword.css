@@ -201,14 +201,12 @@
   --kw-primary: #0b9c7a; /* "등록" 버튼 · 선택된 단어 버튼 (디자인 시안 색) */
 }
 
-/* 사진·칩이 길어서 화면을 넘어가도 "등록" 버튼은 항상 화면 하단에 보이도록 고정해요. */
+/* 사진·칩이 길어서 화면을 넘어가도 "등록" 버튼은 항상 화면 하단에 보이도록 고정해요.
+   입력창은 고정하지 않아요 — 내용(마이크 안내 문구) 바로 아래에서 함께 스크롤돼요. */
 .kw-bottom {
   position: sticky;
   bottom: 0;
   z-index: 5;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
   padding: 10px 15px max(30px, env(safe-area-inset-bottom));
   background: #fff;
 }
@@ -216,6 +214,8 @@
 .kw-chat-input {
   width: 100%;
   height: 56px;
+  margin-top: 33px; /* 시안: 마이크 안내 문구 ↔ 입력창 */
+  margin-bottom: 18px; /* 입력창 ↔ 고정 버튼 사이 (버튼 영역 위 여백 10px과 합쳐 시안의 ~51px 근처) */
   border: none;
   outline: none;
   border-radius: 999px;

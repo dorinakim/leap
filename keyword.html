@@ -8,7 +8,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="icon" type="image/png" href="apple-touch-icon.png" />
 <link rel="stylesheet" href="styles.css?v=1" />
-<link rel="stylesheet" href="keyword.css?v=4" />
+<link rel="stylesheet" href="keyword.css?v=5" />
 </head>
 <body class="kw-body">
   <div class="kw-page">
@@ -40,10 +40,13 @@
         </button>
         <p class="kw-voice-hint" id="kwVoiceHint">더 도움이 필요하다면, 직접 이야기해 주세요!</p>
       </div>
+
+      <!-- 입력창은 화면에 고정하지 않고 내용과 함께 스크롤돼요 (고정되는 건 아래 등록 버튼뿐) -->
+      <input type="text" id="kwInput" class="kw-chat-input" placeholder="혹은 채팅으로 말씀하셔도 됩니다." autocomplete="off" />
     </div>
 
+    <!-- 화면 아래에 고정되는 건 "등록" 버튼 하나뿐이에요 -->
     <footer class="kw-bottom">
-      <input type="text" id="kwInput" class="kw-chat-input" placeholder="혹은 채팅으로 말씀하셔도 됩니다." autocomplete="off" />
       <button type="button" class="kw-primary-btn" id="btnSend">등록</button>
     </footer>
   </div>
