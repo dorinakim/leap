@@ -154,6 +154,14 @@ overlay.addEventListener("click", (e) => {
   if (e.target === overlay) closeCommentSheet();
 });
 
+// 댓글창을 아래로 스와이프하면 따라 내려가며 닫혀요.
+enableSheetSwipeClose({
+  overlay,
+  sheet: document.getElementById("commentSheet"),
+  scrollEl: commentList,
+  onClose: closeCommentSheet,
+});
+
 function personAvatarSvg() {
   return '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c1-4 4-6 7.5-6s6.5 2 7.5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
 }

@@ -418,6 +418,14 @@ commentOverlay.addEventListener("click", (e) => {
   if (e.target === commentOverlay) closeCommentSheet();
 });
 
+// 댓글창을 아래로 스와이프하면 따라 내려가며 닫혀요.
+enableSheetSwipeClose({
+  overlay: commentOverlay,
+  sheet: commentOverlay.querySelector(".comment-sheet"),
+  scrollEl: commentSheetList,
+  onClose: closeCommentSheet,
+});
+
 btnCommentSend.addEventListener("click", submitComment);
 commentInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") submitComment();
