@@ -103,6 +103,34 @@ function getPostById(id) {
   return merged.deleted ? null : merged;
 }
 
+// ---------- 좋아요/댓글 개수 표시 (피드 · 게시물 상세 공용) ----------
+
+// 댓글 총 개수 — 인스타그램처럼 답글도 같이 세요.
+function getCommentCount(post) {
+  return (post.comments || []).reduce((sum, c) => sum + 1 + (c.replies || []).length, 0);
+}
+
+// 아이콘 옆에 붙는 짧은 숫자 표기 (1,234 → 1.2천, 20,531 → 2.1만). 큰 숫자가
+// 아이콘 옆에서 길게 늘어나지 않도록 축약해요.
+const compactCountFormatter = (() => {
+  try {
+    return new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 });
+  } catch (e) {
+    return null; // 오래된 브라우저는 축약 없이 쉼표 표기로 대체
+  }
+})();
+
+function formatCompactCount(n) {
+  return compactCountFormatter ? compactCountFormatter.format(n) : n.toLocaleString("ko-KR");
+}
+
+// 하트/말풍선 아이콘 옆 숫자 칸을 채워요. 0이면 인스타그램처럼 숫자를 숨겨요.
+function setActionCount(el, n) {
+  const show = n > 0;
+  el.textContent = show ? formatCompactCount(n) : "";
+  el.hidden = !show;
+}
+
 function updatePost(id, patch) {
   const posts = getPosts();
   const idx = posts.findIndex((p) => p.id === id);

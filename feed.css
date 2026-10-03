@@ -87,7 +87,7 @@
 .feed-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 18px;
   padding: 10px 16px 2px;
 }
 
@@ -99,6 +99,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6px; /* 아이콘 ↔ 옆에 붙는 좋아요/댓글 숫자 */
+}
+
+/* 하트·말풍선 옆 개수 — 좋아요를 눌러 하트가 빨개져도 숫자는 본문색 그대로 */
+.feed-action-btn .action-count {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text);
 }
 
 .feed-action-btn svg {

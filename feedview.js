@@ -54,9 +54,11 @@ function createFeedCard(post) {
   actions.innerHTML = `
     <button class="feed-action-btn feed-like-btn" aria-label="좋아요">
       <svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.6-9.6-9.3C.9 7.8 2.6 4.5 6 4c2-.3 3.7.7 6 3 2.3-2.3 4-3.3 6-3 3.4.5 5.1 3.8 3.6 7.2-2.1 4.7-9.6 9.3-9.6 9.3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      <span class="action-count" hidden></span>
     </button>
     <button class="feed-action-btn feed-comment-btn" aria-label="댓글">
       <svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20l1.1-5.2A8.5 8.5 0 1 1 21 11.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      <span class="action-count" hidden></span>
     </button>
     <span class="feed-actions-spacer"></span>
     <button class="feed-action-btn feed-bookmark-btn" aria-label="북마크">
@@ -64,12 +66,18 @@ function createFeedCard(post) {
     </button>`;
 
   const likeBtn = actions.querySelector(".feed-like-btn");
+  const likeCountEl = likeBtn.querySelector(".action-count");
+  const commentCountEl = actions.querySelector(".feed-comment-btn .action-count");
+  setActionCount(likeCountEl, post.likeCount);
+  setActionCount(commentCountEl, getCommentCount(post));
+
   likeBtn.classList.toggle("is-liked", post.likedByMe);
   likeBtn.addEventListener("click", () => {
     post.likedByMe = !post.likedByMe;
     post.likeCount += post.likedByMe ? 1 : -1;
     updatePost(post.id, { likedByMe: post.likedByMe, likeCount: post.likeCount });
     likeBtn.classList.toggle("is-liked", post.likedByMe);
+    setActionCount(likeCountEl, post.likeCount);
     likesEl.innerHTML = likesHtml();
   });
 

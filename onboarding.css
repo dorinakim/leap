@@ -1,6 +1,7 @@
 :root {
   --ob-accent: #1f9d63;
   --ob-accent-dark: #0f4d3a;
+  --ob-primary-btn: #0b9c7a; /* 하단 "등록" 버튼 (디자인 시안 색) */
   --ob-mint: #a9d9c9;
   --ob-text-muted: #8a8f98;
   --ob-border: #ececec;
@@ -138,14 +139,10 @@ html, body {
   padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
 
-/* 이름 입력 화면의 "다음" 바는 .ob-step--name 자체 좌우 여백(20px)을 상쇄해서
-   피드/언어 선택 화면과 같은 폭으로 꽉 차 보이게 해요. */
-.ob-step--name .ob-chat-bar {
+/* 이름 입력 화면의 하단 버튼 영역은 .ob-step--name 자체 좌우 여백(20px)을 상쇄해서
+   언어 선택 화면과 같은 폭으로 꽉 차 보이게 해요. */
+.ob-step--name .ob-bottom-action {
   margin: 0 -20px;
-}
-
-.ob-chat-bar--end {
-  justify-content: flex-end;
 }
 
 .ob-mic {
@@ -298,48 +295,33 @@ html, body {
   font-weight: 700;
 }
 
-.ob-step--lang .ob-chat-bar {
+.ob-step--lang .ob-bottom-action {
   margin-top: auto;
 }
 
-.ob-chat-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 20px max(14px, env(safe-area-inset-bottom));
-  border-top: 1px solid var(--ob-border);
+/* ---------- 하단 "등록" 버튼 (이름 입력 · 언어 선택 공통) ----------
+   디자인 시안 기준: 좌우 15px 여백, 높이 50px, 라운드 10px, 하단 그림자. */
+.ob-bottom-action {
+  padding: 16px 15px max(30px, env(safe-area-inset-bottom));
 }
 
-.ob-chat-input {
-  flex: 1;
+.ob-primary-btn {
+  display: block;
+  width: 100%;
+  height: 50px;
   border: none;
-  outline: none;
-  background: #f5f6f7;
-  border-radius: 999px;
-  padding: 10px 16px;
-  font-size: 14px;
-  color: #1a1a1a;
-  min-width: 0;
-}
-
-.ob-chat-input::placeholder {
-  color: var(--ob-text-muted);
-}
-
-.ob-chat-send {
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  border: none;
-  background: var(--ob-accent);
+  border-radius: 10px;
+  background: var(--ob-primary-btn);
   color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  transition: transform 0.1s ease, filter 0.1s ease;
 }
 
-.ob-chat-send svg {
-  width: 17px;
-  height: 17px;
+.ob-primary-btn:active {
+  transform: scale(0.985);
+  filter: brightness(0.95);
 }

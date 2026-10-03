@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>단어 — 키워드 선택</title>
 <link rel="stylesheet" href="styles.css?v=1" />
-<link rel="stylesheet" href="keyword.css?v=1" />
+<link rel="stylesheet" href="keyword.css?v=3" />
 </head>
 <body class="kw-body">
   <div class="kw-page">
@@ -39,11 +39,9 @@
       </div>
     </div>
 
-    <footer class="kw-inputbar">
-      <input type="text" id="kwInput" placeholder="혹은 채팅으로 말씀하셔도 됩니다." />
-      <button class="kw-send" id="btnSend" aria-label="전송">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12 20 4l-6 16-3-7-7-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="currentColor"/></svg>
-      </button>
+    <footer class="kw-bottom">
+      <input type="text" id="kwInput" class="kw-chat-input" placeholder="혹은 채팅으로 말씀하셔도 됩니다." autocomplete="off" />
+      <button type="button" class="kw-primary-btn" id="btnSend">등록</button>
     </footer>
   </div>
 
