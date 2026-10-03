@@ -1,14 +1,17 @@
-// notice.js — 홈·피드·마이페이지를 구경하는 중에 가끔 위에서 내려오는 알림 배너 (데모용)
+// notice.js — 홈·피드·마이페이지를 구경하는 중에 위에서 내려오는 알림 배너 (데모용)
 //
-// 언제 울리나요?
-// - "아무 조작도 하지 않은 상태"가 1~2분(알림마다 1분~2분 사이에서 무작위) 이어지면 울려요.
-//   탭·스크롤·글자 입력 같은 조작을 하면 시간을 처음부터 다시 세요. 화면을 옮기는 것도 조작이라
-//   화면마다 새로 시작하고, 다른 앱에 갔다가 돌아오는 것도 조작으로 봐요.
-// - 울린 뒤에도 계속 가만히 있으면 다시 1~2분 뒤에 울려요.
-// - 홈·피드·마이페이지에서만 울려요. 사진을 올리는 화면(카메라·단어 선택·사전·수정)과
-//   게시물 상세, 온보딩에선 이 파일을 불러오지 않아요.
+// 언제 울리나요? ("한 번 사용할 때" = 앱을 열고 닫기 전까지. 탭을 닫거나 30분 넘게 비우면 새로 시작)
+// - 첫 알림: 앱에 들어와서 홈·피드·마이페이지를 본 시간이 합쳐서 30초가 되면 울려요.
+// - 두 번째부터: 직전 알림이 울린 때부터 1~2분(알림마다 1분~2분 사이 무작위) 뒤에 울려요.
+// - 한 번 사용할 때 최대 3번까지만 울려요.
+// - 탭·스크롤을 해도 시간은 리셋되지 않아요(예전 "가만히 있는 시간" 방식은 구경하는 동안
+//   계속 리셋돼서 거의 안 울렸어요). 화면을 옮겨도(홈→피드 등) 시간이 이어져요 — 진행 상황을
+//   sessionStorage에 저장하기 때문이에요.
+// - 홈·피드·마이페이지에서만 시간이 쌓여요. 사진을 올리는 화면(카메라·단어 선택·사전·수정),
+//   게시물 상세, 온보딩에선 이 파일을 불러오지 않아서 그 시간은 세지 않아요.
+// - 화면이 안 보이는 동안(다른 앱/탭)도 세지 않아요.
 // - 위 세 화면 안에서도 댓글창·더보기 같은 팝업이 열려 있거나 글자를 입력하는 중이면 울리지
-//   않아요 (isUserBusy). 그런 상태는 "조작 중"으로 보고, 끝난 뒤부터 다시 1~2분을 세요.
+//   않아요 (isUserBusy). 시간이 됐어도 그 상태가 끝나면 바로 울려요.
 //
 // 어떻게 보이나요?
 // - 위에서 아래로 내려오면서 벨이 울리고(진동을 지원하는 기기에선 진동도), 울린 지 3초 뒤에
@@ -17,17 +20,21 @@
 //   * 웹에서는 폰의 무음/진동 모드를 읽을 수 없어요. 아이폰은 무음 스위치를 켜면 웹 오디오가
 //     자동으로 꺼지지만, 아이폰은 웹에서 진동을 낼 수 없어요(안드로이드 크롬은 가능).
 //
-// 폰에서 빨리 확인하려면: 주소 뒤에 ?notice=5 를 붙여 열고, 화면을 한 번 탭한 뒤 5초 동안
-//   가만히 계세요 (조작 없이 5초 지나면 울려요). 되돌리려면 ?notice=off 로 한 번 여세요.
+// 폰에서 빨리 확인하려면: 주소 뒤에 ?notice=5 를 붙여 열면 "5초 구경할 때마다" 울려요(최대 3번은
+//   그대로). 화면을 한 번 탭해야 소리가 나요. 되돌리려면 ?notice=off 로 한 번 여세요.
 // 안 울리는 이유를 확인하려면: 주소 뒤에 ?notice=debug 를 붙여 열면 화면 왼쪽 아래에 상태가
-//   실시간으로 보여요(가만히 있은 시간, 마지막 조작, 방해 상태, 소리). ?notice=off 로 끄세요.
+//   실시간으로 보여요(울린 횟수, 쌓인 시간, 방해 상태, 소리). ?notice=off 로 끄세요.
 (function () {
-  const IDLE_MIN_MS = 1 * 60 * 1000; // 무조작 시간의 하한: 1분
-  const IDLE_MAX_MS = 2 * 60 * 1000; // 무조작 시간의 상한: 2분 (이 사이에서 무작위)
+  const FIRST_MS = 30 * 1000; // 첫 알림: 구경한 지 30초
+  const NEXT_MIN_MS = 1 * 60 * 1000; // 두 번째부터: 직전 알림 뒤 1분 ~
+  const NEXT_MAX_MS = 2 * 60 * 1000; // ~ 2분 사이에서 무작위
+  const MAX_ALERTS = 3; // 한 번 사용할 때 최대 횟수
+  const SESSION_GAP_MS = 30 * 60 * 1000; // 이만큼 비어 있으면 "새로 사용"으로 봐요
   const VISIBLE_MS = 3000; // 울린(=내려오기 시작한) 뒤 이 시간이 지나면 위로 올라가요
   const LEAVE_MS = 450; // 올라가는 애니메이션이 끝나 DOM에서 지우기까지의 시간
   const VIBRATE_PATTERN = [200, 100, 200]; // 진동: 웅-쉬-웅
-  const IDLE_OVERRIDE_KEY = "leaf:noticeIdleSec"; // 테스트용 (?notice=5) — 이 탭에서만 유지
+  const SESSION_KEY = "leaf:noticeSession"; // 이번 사용의 진행 상황 (탭 단위로 유지)
+  const FAST_OVERRIDE_KEY = "leaf:noticeFastSec"; // 테스트용 (?notice=5)
   const LAST_MSG_KEY = "leaf:noticeLastIndex";
 
   const MESSAGES = [
@@ -111,35 +118,69 @@
     document.head.appendChild(style);
   }
 
-  // ---------- 무조작 시간 재기 ----------
-  // "마지막으로 조작한 시각"을 기억해두고, 거기서부터 정해진 시간(1~2분)이 지나면 알림을 띄워요.
-  // 화면을 옮기면 페이지가 새로 로드되면서 이 값도 새로 시작해요(화면을 옮기는 것 자체가 조작이라서
-  // 저장해서 이어갈 필요가 없어요).
-  let lastActivityAt = Date.now();
+  // ---------- "이번 사용"의 진행 상황 ----------
+  // { count: 지금까지 울린 횟수, elapsedMs: 마지막 알림 뒤 구경한 시간, needMs: 다음 알림까지 필요한 시간,
+  //   lastSeenAt: 마지막으로 확인한 시각 }
+  // 화면을 옮기면 페이지가 새로 로드되니까 sessionStorage에 저장해서 이어가요.
+  function fastOverrideMs() {
+    try {
+      const sec = Number(sessionStorage.getItem(FAST_OVERRIDE_KEY));
+      return sec > 0 ? sec * 1000 : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
 
-  // 이번 알림을 띄우기까지 필요한 무조작 시간. 알림마다 1~2분 사이에서 무작위로 정해요.
-  function pickIdleMs() {
-    // 테스트용: ?notice=5 로 열면 이 탭에서는 "5초 무조작"으로 바뀌어요. ?notice=off 로 되돌려요.
+  function pickNeedMs(count) {
+    const fast = fastOverrideMs();
+    if (fast) return fast;
+    if (count === 0) return FIRST_MS;
+    return NEXT_MIN_MS + Math.random() * (NEXT_MAX_MS - NEXT_MIN_MS);
+  }
+
+  function newSession() {
+    return { count: 0, elapsedMs: 0, needMs: pickNeedMs(0), lastSeenAt: Date.now() };
+  }
+
+  function saveSession() {
+    session.lastSeenAt = Date.now();
+    try {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    } catch (e) {
+      /* 저장을 못 해도 이 화면 안에서는 정상 동작해요 */
+    }
+  }
+
+  function loadSession() {
+    // 테스트용: ?notice=5 → 5초마다, ?notice=off → 평소대로. 바꾸면 처음부터 다시 세요.
     const m = /[?&]notice=(\d+|off)/.exec(location.search);
+    let restart = false;
     try {
       if (m) {
-        if (m[1] === "off") sessionStorage.removeItem(IDLE_OVERRIDE_KEY);
-        else sessionStorage.setItem(IDLE_OVERRIDE_KEY, m[1]);
+        if (m[1] === "off") sessionStorage.removeItem(FAST_OVERRIDE_KEY);
+        else sessionStorage.setItem(FAST_OVERRIDE_KEY, m[1]);
+        restart = true;
       }
-      const sec = Number(sessionStorage.getItem(IDLE_OVERRIDE_KEY));
-      if (sec > 0) return sec * 1000;
+      if (!restart) {
+        const saved = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
+        if (
+          saved &&
+          Number.isFinite(saved.count) &&
+          Number.isFinite(saved.elapsedMs) &&
+          Number.isFinite(saved.needMs) &&
+          Date.now() - saved.lastSeenAt < SESSION_GAP_MS
+        ) {
+          return saved;
+        }
+      }
     } catch (e) {
-      /* sessionStorage를 못 써도 기본 동작(1~2분)으로 가요 */
+      /* 못 읽으면 새로 시작해요 */
     }
-    return IDLE_MIN_MS + Math.random() * (IDLE_MAX_MS - IDLE_MIN_MS);
+    return newSession();
   }
-  let idleNeededMs = pickIdleMs();
 
-  let lastActivityReason = "페이지 열림"; // 상태 표시(?notice=debug)용: 무엇 때문에 시간이 리셋됐나
-  function markActivity(e) {
-    lastActivityAt = Date.now();
-    lastActivityReason = e && e.type ? e.type : typeof e === "string" ? e : "?";
-  }
+  const session = loadSession();
+  saveSession();
 
   // ---------- 문구 고르기 ----------
   function pickMessageIndex() {
@@ -312,45 +353,58 @@
     return !!a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.isContentEditable);
   }
 
-  // ---------- 조작 감지: 뭔가 하면 무조작 시간을 처음부터 다시 세요 ----------
-  // 탭·스크롤·글자 입력·마우스 움직임 모두 "조작"이에요. 이벤트는 가볍게 시각만 기록해요.
-  ["pointerdown", "pointermove", "touchstart", "touchmove", "wheel", "keydown", "click"].forEach((ev) =>
-    document.addEventListener(ev, markActivity, { capture: true, passive: true })
-  );
-  // 스크롤은 버블링되지 않아서 capture로 받아야 안쪽 목록 스크롤도 잡혀요.
-  window.addEventListener("scroll", markActivity, { capture: true, passive: true });
+  // ---------- 1초마다 "구경한 시간"을 쌓고, 알림 시간이 됐는지 확인 ----------
+  let lastTickAt = Date.now();
+  let timerId = null;
 
-  // 다른 앱에 갔다가 돌아오면 그것도 조작으로 봐요 — 안 그러면 그동안 쌓인 시간 때문에
-  // 돌아오자마자 알림이 튀어나와요.
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) markActivity();
-  });
-
-  // ---------- 1초마다 "가만히 있은 지 충분히 됐나?" 확인 ----------
   function tick() {
-    if (document.hidden) return; // 안 보이는 탭에선 띄우지 않아요
+    const now = Date.now();
+    const delta = now - lastTickAt;
+    lastTickAt = now;
 
-    // 팝업이 열려 있거나 입력 중이면 계속 "조작 중"으로 쳐요. 그 상태가 끝난 시점부터
-    // 다시 1~2분을 세니까, 댓글창을 닫자마자 알림이 튀어나오는 일이 없어요.
+    if (document.hidden) return; // 안 보이는 동안(다른 앱/탭)은 세지 않아요
+    // 폰이 잠들었다 깨는 등으로 틱이 오래 밀렸으면, 그 시간은 구경한 걸로 치지 않아요.
+    session.elapsedMs += Math.min(delta, 2000);
+
+    if (session.count >= MAX_ALERTS) {
+      saveSession();
+      return finish();
+    }
+    if (session.elapsedMs < session.needMs) {
+      saveSession();
+      return;
+    }
+    // 시간이 됐어도 댓글창이 열려 있거나 입력 중이면 기다려요. 끝나는 순간 바로 울려요.
     if (isUserBusy()) {
-      markActivity("팝업 열림/입력 중");
+      saveSession();
       return;
     }
 
-    if (Date.now() - lastActivityAt < idleNeededMs) return; // 아직 충분히 가만히 있지 않음
-
     showNotice();
-    // 알림이 뜬 시점부터 다시 센다 → 계속 가만히 있으면 1~2분 뒤에 또 울려요.
-    markActivity("알림 표시");
-    idleNeededMs = pickIdleMs();
+    session.count += 1;
+    session.elapsedMs = 0; // 울린 시점부터 다시 1~2분을 세요
+    session.needMs = pickNeedMs(session.count);
+    saveSession();
+    if (session.count >= MAX_ALERTS) finish();
   }
 
-  setInterval(tick, 1000);
+  // 다 울렸으면 더 확인할 필요가 없어요.
+  function finish() {
+    if (timerId) clearInterval(timerId);
+    timerId = null;
+  }
+
+  // 화면이 다시 보이면 안 보이던 동안의 시간이 한꺼번에 더해지지 않게 기준 시각만 새로 잡아요.
+  document.addEventListener("visibilitychange", () => {
+    lastTickAt = Date.now();
+  });
+
+  if (session.count < MAX_ALERTS) timerId = setInterval(tick, 1000);
 
   // ---------- 상태 표시 (?notice=debug) ----------
   // 폰에서 "왜 안 울리지?"를 눈으로 확인하려는 용도예요. 평소엔 꺼져 있어요.
-  //  - 무조작 시간이 기준(1~2분)까지 차오르는지, 가만히 있는데도 0으로 돌아간다면 어떤 입력
-  //    때문인지(마지막 조작), 팝업/입력 중이라 막힌 건 아닌지, 소리가 잠겨 있진 않은지 보여줘요.
+  //  - 몇 번 울렸는지, 구경한 시간이 기준까지 차오르는지, 팝업/입력 중이라 막힌 건 아닌지,
+  //    소리가 잠겨 있진 않은지 보여줘요.
   const DEBUG_KEY = "leaf:noticeDebug";
   (function setupDebugBadge() {
     const m = /[?&]notice=(debug|off)/.exec(location.search);
@@ -368,13 +422,16 @@
       "pointer-events:none;white-space:pre;";
     document.body.appendChild(badge);
     const render = () => {
-      const idle = Math.round((Date.now() - lastActivityAt) / 1000);
-      const need = Math.round(idleNeededMs / 1000);
+      const fast = fastOverrideMs();
+      const kind = fast
+        ? "  ⚠ 테스트 설정(?notice=" + fast / 1000 + ")"
+        : session.count === 0
+        ? "  (첫 알림 30초)"
+        : "  (이후 1~2분)";
       badge.textContent =
         "알림 상태\n" +
-        "가만히 있은 시간: " + idle + "초 / 기준 " + need + "초" +
-        (sessionStorage.getItem(IDLE_OVERRIDE_KEY) ? "  ⚠ 테스트 설정(?notice=" + sessionStorage.getItem(IDLE_OVERRIDE_KEY) + ")" : "  (평소 1~2분)") + "\n" +
-        "마지막 조작: " + lastActivityReason + "\n" +
+        "울린 횟수: " + session.count + " / " + MAX_ALERTS + "\n" +
+        "구경한 시간: " + Math.round(session.elapsedMs / 1000) + "초 / 기준 " + Math.round(session.needMs / 1000) + "초" + kind + "\n" +
         "방해 상태(팝업/입력): " + (isUserBusy() ? "예" : "아니오") + "\n" +
         "화면 보임: " + (document.hidden ? "아니오" : "예") + "\n" +
         "소리: " + (audioCtx ? audioCtx.state : "잠김(탭 필요)");
@@ -384,7 +441,9 @@
   })();
 
   try {
-    localStorage.removeItem("leaf:noticeNextAt"); // 예전(고정 주기 방식)이 남긴 값
+    // 예전 방식들이 남긴 값 정리
+    localStorage.removeItem("leaf:noticeNextAt");
+    sessionStorage.removeItem("leaf:noticeIdleSec");
   } catch (e) {
     /* ignore */
   }
@@ -398,9 +457,10 @@
     audioState: () => (audioCtx ? audioCtx.state : "locked(첫 탭 전)"),
     ringBell,
     vibrate,
-    idleState: () => ({
-      idleSec: Math.round((Date.now() - lastActivityAt) / 1000),
-      needSec: Math.round(idleNeededMs / 1000),
+    sessionState: () => ({
+      count: session.count,
+      elapsedSec: Math.round(session.elapsedMs / 1000),
+      needSec: Math.round(session.needMs / 1000),
     }),
   };
 })();
