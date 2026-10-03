@@ -108,9 +108,19 @@ function finishOnboarding() {
   window.location.href = "index.html";
 }
 
+// 입력창이 화면 가운데에 있어서, 키가 작은 화면에선 펼친 목록이 화면 아래로 넘쳐
+// 마지막 항목이 잘릴 수 있어요. 입력창 아래 남은 공간만큼으로 높이를 제한하고, 모자라면
+// 목록 안에서 스크롤되게 해요 (넉넉한 화면에선 원래대로 최대 260px).
+function fitLangDropdown() {
+  const pageBottom = document.querySelector(".ob-page").getBoundingClientRect().bottom;
+  const room = pageBottom - langInput.getBoundingClientRect().bottom - 8 - 12;
+  langDropdown.style.maxHeight = `${Math.max(120, Math.min(260, room))}px`;
+}
+
 langInput.addEventListener("click", () => {
   renderLangOptions();
   langDropdown.hidden = !langDropdown.hidden;
+  if (!langDropdown.hidden) fitLangDropdown();
 });
 
 document.addEventListener("click", (e) => {

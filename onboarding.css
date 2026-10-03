@@ -224,10 +224,21 @@ html, body {
   color: #1a1a1a;
 }
 
+/* 제목 아래~하단 버튼 위의 남는 공간을 다 차지하고, 입력창을 그 한가운데에 둬요
+   (이름 입력 화면의 .ob-name-input-wrap과 같은 방식). */
+.ob-lang-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 드롭다운이 이 박스(=입력창) 바로 아래에 붙도록 position 기준은 입력창 감싸는 박스로
+   유지해요. 좌우 여백(24px)은 이름 입력 화면의 입력창과 똑같이 맞췄어요. */
 .ob-lang-input-wrap {
   position: relative;
-  margin-top: 60px;
-  padding: 0 20px;
+  width: 100%;
+  padding: 0 24px;
 }
 
 .ob-lang-input {
@@ -256,8 +267,8 @@ html, body {
 
 .ob-lang-dropdown {
   position: absolute;
-  left: 20px;
-  right: 20px;
+  left: 24px;
+  right: 24px;
   top: calc(100% + 8px);
   background: #fff;
   border: 1px solid var(--ob-border);

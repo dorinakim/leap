@@ -7,7 +7,7 @@
 <!-- 브라우저 탭 아이콘 · "홈 화면에 추가" 아이콘 -->
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="icon" type="image/png" href="apple-touch-icon.png" />
-<link rel="stylesheet" href="onboarding.css?v=4" />
+<link rel="stylesheet" href="onboarding.css?v=5" />
 </head>
 <body>
   <div class="ob-page">
@@ -58,9 +58,12 @@
         <span class="ob-lang-question">배우고자 하는 언어를 알려주세요.</span>
       </h2>
 
-      <div class="ob-lang-input-wrap">
-        <input type="text" id="langInput" class="ob-lang-input" placeholder="" aria-label="언어 선택" autocomplete="off" readonly />
-        <ul class="ob-lang-dropdown" id="langDropdown" hidden></ul>
+      <!-- 이름 입력 화면처럼 제목과 하단 버튼 사이의 남는 공간 한가운데에 입력창을 둬요 -->
+      <div class="ob-lang-center">
+        <div class="ob-lang-input-wrap">
+          <input type="text" id="langInput" class="ob-lang-input" placeholder="" aria-label="언어 선택" autocomplete="off" readonly />
+          <ul class="ob-lang-dropdown" id="langDropdown" hidden></ul>
+        </div>
       </div>
 
       <div class="ob-bottom-action">
@@ -70,6 +73,6 @@
 
   </div>
 
-  <script src="onboardview.js?v=4"></script>
+  <script src="onboardview.js?v=5"></script>
 </body>
 </html>
