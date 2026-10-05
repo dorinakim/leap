@@ -136,11 +136,20 @@ const overlay = document.getElementById("commentOverlay");
 const commentList = document.getElementById("commentList");
 const commentInput = document.getElementById("commentInput");
 const btnCommentSend = document.getElementById("btnCommentSend");
+const commentReplyBanner = document.getElementById("commentReplyBanner");
+const commentReplyBannerText = document.getElementById("commentReplyBannerText");
+const btnCancelReply = document.getElementById("btnCancelReply");
 
 let activePostId = null;
+// 댓글창이 열려 있는 동안 쓰는 게시물 "한 벌". getPostById는 부를 때마다 새 복사본을 주기 때문에,
+// 화면에 그려진 댓글(답글 대상)과 저장할 댓글이 서로 다른 복사본이면 답글이 저장에서 빠져요.
+let activePost = null;
 
 function openCommentSheet(postId) {
   activePostId = postId;
+  activePost = getPostById(postId);
+  cancelReply();
+  commentInput.value = "";
   renderComments();
   overlay.hidden = false;
 }
@@ -148,6 +157,7 @@ function openCommentSheet(postId) {
 function closeCommentSheet() {
   overlay.hidden = true;
   activePostId = null;
+  activePost = null;
 }
 
 overlay.addEventListener("click", (e) => {
@@ -200,79 +210,132 @@ async function translateComment(comment, textEl, linkBtn) {
   linkBtn.textContent = "번역 숨기기";
 }
 
+// 댓글 한 줄(최상위 댓글이든 답글이든 같은 모양, 답글은 들여쓰기만 달라요).
+// threadComment는 "답글 달기"를 눌렀을 때 답글이 실제로 쌓이는 최상위 댓글이에요 —
+// 답글에 또 답글을 달아도 인스타그램처럼 한 단계(2depth)로 합쳐서 같은 스레드에 쌓여요.
+function buildCommentItem(post, comment, threadComment, isReply) {
+  const item = document.createElement("div");
+  item.className = isReply ? "comment-item comment-item--reply" : "comment-item";
+
+  const avatar = document.createElement("span");
+  avatar.className = "comment-avatar";
+  avatar.innerHTML = personAvatarSvg();
+  item.appendChild(avatar);
+
+  const body = document.createElement("div");
+  body.className = "comment-body";
+
+  const meta = document.createElement("div");
+  meta.className = "comment-meta";
+  const nameEl = document.createElement("b");
+  nameEl.textContent = displayName(comment.username);
+  meta.appendChild(nameEl);
+  meta.appendChild(document.createTextNode(comment.timeLabel || ""));
+  body.appendChild(meta);
+
+  const text = document.createElement("div");
+  text.className = "comment-text";
+  renderCommentText(text, comment);
+  body.appendChild(text);
+
+  const translation = document.createElement("div");
+  translation.className = "comment-translation";
+  translation.hidden = true;
+  body.appendChild(translation);
+
+  const links = document.createElement("div");
+  links.className = "comment-links";
+  const replyBtn = document.createElement("button");
+  replyBtn.className = "comment-link-btn";
+  replyBtn.textContent = "답글 달기";
+  replyBtn.addEventListener("click", () => startReply(threadComment, comment.username));
+  const translateBtn = document.createElement("button");
+  translateBtn.className = "comment-link-btn";
+  translateBtn.textContent = "번역 보기";
+  translateBtn.addEventListener("click", () => translateComment(comment, translation, translateBtn));
+  links.appendChild(replyBtn);
+  links.appendChild(translateBtn);
+  body.appendChild(links);
+
+  item.appendChild(body);
+
+  const likeBtn = document.createElement("button");
+  likeBtn.className = "comment-like-btn";
+  if (comment.liked) likeBtn.classList.add("is-liked");
+  likeBtn.innerHTML = heartSvg();
+  likeBtn.addEventListener("click", () => {
+    comment.liked = !comment.liked;
+    likeBtn.classList.toggle("is-liked", comment.liked);
+    updatePost(post.id, { comments: post.comments });
+  });
+  item.appendChild(likeBtn);
+
+  return item;
+}
+
 function renderComments() {
-  const post = getPostById(activePostId);
+  const post = activePost;
   commentList.innerHTML = "";
-  post.comments.forEach((comment, index) => {
-    const item = document.createElement("div");
-    item.className = "comment-item";
-
-    const avatar = document.createElement("span");
-    avatar.className = "comment-avatar";
-    avatar.innerHTML = personAvatarSvg();
-    item.appendChild(avatar);
-
-    const body = document.createElement("div");
-    body.className = "comment-body";
-
-    const meta = document.createElement("div");
-    meta.className = "comment-meta";
-    meta.innerHTML = `<b>${displayName(comment.username)}</b>${comment.timeLabel || ""}`;
-    body.appendChild(meta);
-
-    const text = document.createElement("div");
-    text.className = "comment-text";
-    renderCommentText(text, comment);
-    body.appendChild(text);
-
-    const translation = document.createElement("div");
-    translation.className = "comment-translation";
-    translation.hidden = true;
-    body.appendChild(translation);
-
-    const links = document.createElement("div");
-    links.className = "comment-links";
-    const replyBtn = document.createElement("button");
-    replyBtn.className = "comment-link-btn";
-    replyBtn.textContent = "답글 달기";
-    replyBtn.addEventListener("click", () => {
-      commentInput.value = `@${comment.username} `;
-      commentInput.focus();
+  post.comments.forEach((comment) => {
+    // 댓글 + 그 아래 답글들을 한 묶음으로 만들어요 (답글이 항상 부모 댓글 바로 아래에 와요)
+    const thread = document.createElement("div");
+    thread.className = "comment-thread";
+    thread.appendChild(buildCommentItem(post, comment, comment, false));
+    (comment.replies || []).forEach((reply) => {
+      thread.appendChild(buildCommentItem(post, reply, comment, true));
     });
-    const translateBtn = document.createElement("button");
-    translateBtn.className = "comment-link-btn";
-    translateBtn.textContent = "번역 보기";
-    translateBtn.addEventListener("click", () => translateComment(comment, translation, translateBtn));
-    links.appendChild(replyBtn);
-    links.appendChild(translateBtn);
-    body.appendChild(links);
-
-    item.appendChild(body);
-
-    const likeBtn = document.createElement("button");
-    likeBtn.className = "comment-like-btn";
-    if (comment.liked) likeBtn.classList.add("is-liked");
-    likeBtn.innerHTML = heartSvg();
-    likeBtn.addEventListener("click", () => {
-      comment.liked = !comment.liked;
-      likeBtn.classList.toggle("is-liked", comment.liked);
-      updatePost(post.id, { comments: post.comments });
-    });
-    item.appendChild(likeBtn);
-
-    commentList.appendChild(item);
+    commentList.appendChild(thread);
   });
 }
 
+// ---------- 답글 달기 ----------
+// 지금 답글을 다는 대상(최상위 댓글). null이면 새 최상위 댓글을 쓰는 중이에요.
+let replyingTo = null;
+// 답글 맨 앞에 붙는 @멘션 이름 — 실제로 "답글 달기"를 누른 그 댓글의 작성자예요.
+let replyMention = "";
+
+function startReply(threadComment, mentionUsername) {
+  replyingTo = threadComment;
+  replyMention = displayName(mentionUsername || threadComment.username);
+  commentReplyBannerText.textContent = `${replyMention}님에게 답글 남기는 중`;
+  commentReplyBanner.hidden = false;
+  commentInput.value = `@${replyMention} `;
+  commentInput.focus();
+  const len = commentInput.value.length;
+  commentInput.setSelectionRange(len, len);
+}
+
+function cancelReply() {
+  replyingTo = null;
+  replyMention = "";
+  commentReplyBanner.hidden = true;
+}
+
+btnCancelReply.addEventListener("click", () => {
+  cancelReply();
+  commentInput.value = "";
+});
+
 function submitComment() {
   const text = commentInput.value.trim();
-  if (!text || !activePostId) return;
-  const post = getPostById(activePostId);
-  post.comments.unshift({ username: "dorina", text, liked: false, timeLabel: "방금" });
+  if (!text || !activePost) return;
+  const post = activePost;
+  const newComment = { username: "dorina", text, liked: false, timeLabel: "방금", replies: [] };
+  if (replyingTo) {
+    // 멘션한 이름을 같이 저장해두면 한글 이름이나 공백이 있는 이름도 색을 정확히 칠할 수 있어요.
+    if (replyMention && text.startsWith("@" + replyMention)) newComment.mention = replyMention;
+    if (!replyingTo.replies) replyingTo.replies = [];
+    replyingTo.replies.push(newComment); // 부모 댓글 아래에 쌓여요
+  } else {
+    post.comments.unshift(newComment);
+  }
   updatePost(post.id, { comments: post.comments });
+  cancelReply();
   commentInput.value = "";
   renderComments();
   renderFeed();
+  // 새 댓글은 맨 위에, 답글은 부모 댓글 아래에 생기니까 위로 올려서 방금 쓴 게 보이게 해요.
+  if (!newComment.mention) commentList.scrollTop = 0;
 }
 
 btnCommentSend.addEventListener("click", submitComment);

@@ -8,7 +8,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="icon" type="image/png" href="apple-touch-icon.png" />
 <link rel="stylesheet" href="styles.css?v=1" />
-<link rel="stylesheet" href="feed.css?v=4" />
+<link rel="stylesheet" href="feed.css?v=5" />
 </head>
 <body>
   <div class="app">
@@ -55,6 +55,10 @@
       <div class="sheet-handle"></div>
       <h2 class="sheet-title">댓글</h2>
       <div class="comment-list" id="commentList"></div>
+      <div class="comment-reply-banner" id="commentReplyBanner" hidden>
+        <span id="commentReplyBannerText"></span>
+        <button type="button" id="btnCancelReply" aria-label="답글 취소">✕</button>
+      </div>
       <div class="comment-input-row">
         <span class="comment-my-avatar">D</span>
         <input type="text" id="commentInput" placeholder="회원님의 생각을 남겨보세요." />
@@ -94,6 +98,6 @@
   <script src="sheet-swipe.js?v=1"></script>
   <script src="dictdata.js?v=19"></script>
   <script src="search.js?v=3"></script>
-  <script src="feedview.js?v=6"></script>
+  <script src="feedview.js?v=8"></script>
 </body>
 </html>

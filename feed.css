@@ -247,6 +247,28 @@
   gap: 18px;
 }
 
+/* 댓글 + 그 답글들(2depth)을 한 묶음으로 — 묶음 안에서는 간격을 좁게 */
+.comment-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* 답글: 부모 댓글 아래에서 들여쓰고, 프로필은 조금 작게 */
+.comment-item--reply {
+  margin-left: 40px;
+}
+
+.comment-item--reply .comment-avatar {
+  width: 26px;
+  height: 26px;
+}
+
+.comment-item--reply .comment-avatar svg {
+  width: 16px;
+  height: 16px;
+}
+
 .comment-item {
   display: flex;
   align-items: flex-start;
@@ -389,4 +411,31 @@
 .comment-send-btn svg {
   width: 17px;
   height: 17px;
+}
+
+/* "OO님에게 답글 남기는 중" 안내줄 (입력창 바로 위) */
+.comment-reply-banner {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--bg-soft);
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.comment-reply-banner[hidden] {
+  display: none !important;
+}
+
+.comment-reply-banner button {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
 }
