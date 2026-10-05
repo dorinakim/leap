@@ -75,6 +75,9 @@
   aspect-ratio: 1 / 1;
   background: var(--bg-soft);
   cursor: pointer;
+  /* 기본 피드 사진은 이미지에 둥근 모서리가 들어 있어서, 새로 올린 사진·영상도 같은 모양이 되도록 CSS로 잘라요 */
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .feed-photo {
