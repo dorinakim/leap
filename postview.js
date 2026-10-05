@@ -224,13 +224,6 @@ commentDeleteConfirm.addEventListener("click", (e) => {
   if (e.target === commentDeleteConfirm) closeCommentDeleteConfirm();
 });
 
-// 한글이 대부분인 텍스트는(예: 내가 한국어로 쓴 댓글) 번역해봐야 의미가 없어서
-// "번역 보기"를 아예 숨겨요.
-function isMostlyKorean(text) {
-  const hangul = (text.match(/[가-힣]/g) || []).length;
-  return text.length > 0 && hangul / text.length > 0.3;
-}
-
 // 댓글 한 줄(최상위 댓글이든 답글이든 똑같은 모양)을 만들어요. replyTargetComment는
 // "답글 달기"를 눌렀을 때 실제로 답글이 들어갈 최상위 댓글이에요 — 답글에 또
 // 답글을 달아도 인스타그램처럼 한 단계로 합쳐서 같은 스레드에 쌓여요.

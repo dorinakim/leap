@@ -180,6 +180,13 @@ function splitLeadingMention(comment) {
   return m ? { mention: m[1], body: text.slice(m[0].length) } : { mention: "", body: text };
 }
 
+// 한글이 대부분인 텍스트는(예: 내가 한국어로 쓴 댓글) 번역해봐야 의미가 없어서
+// "번역 보기"를 아예 숨겨요. (피드 · 게시물 상세 공용)
+function isMostlyKorean(text) {
+  const hangul = (text.match(/[가-힣]/g) || []).length;
+  return text.length > 0 && hangul / text.length > 0.3;
+}
+
 // 아이콘 옆에 붙는 짧은 숫자 표기 (1,234 → 1.2천, 20,531 → 2.1만). 큰 숫자가
 // 아이콘 옆에서 길게 늘어나지 않도록 축약해요.
 const compactCountFormatter = (() => {

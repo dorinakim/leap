@@ -180,36 +180,6 @@ function heartSvg() {
   return '<svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5s-7.5-4.6-9.6-9.3C.9 7.8 2.6 4.5 6 4c2-.3 3.7.7 6 3 2.3-2.3 4-3.3 6-3 3.4.5 5.1 3.8 3.6 7.2-2.1 4.7-9.6 9.3-9.6 9.3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
 }
 
-async function translateComment(comment, textEl, linkBtn) {
-  if (comment.translation) {
-    const showing = textEl.dataset.showingTranslation === "1";
-    if (showing) {
-      textEl.hidden = true;
-      textEl.dataset.showingTranslation = "0";
-      linkBtn.textContent = "번역 보기";
-    } else {
-      textEl.hidden = false;
-      textEl.dataset.showingTranslation = "1";
-      linkBtn.textContent = "번역 숨기기";
-    }
-    return;
-  }
-  linkBtn.textContent = "번역 중...";
-  try {
-    const res = await fetch(
-      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(comment.text)}&langpair=en|ko`
-    );
-    const data = await res.json();
-    comment.translation = data.responseData.translatedText;
-  } catch (e) {
-    comment.translation = "번역을 불러오지 못했어요";
-  }
-  textEl.textContent = comment.translation;
-  textEl.hidden = false;
-  textEl.dataset.showingTranslation = "1";
-  linkBtn.textContent = "번역 숨기기";
-}
-
 // 댓글 한 줄(최상위 댓글이든 답글이든 같은 모양, 답글은 들여쓰기만 달라요).
 // threadComment는 "답글 달기"를 눌렀을 때 답글이 실제로 쌓이는 최상위 댓글이에요 —
 // 답글에 또 답글을 달아도 인스타그램처럼 한 단계(2depth)로 합쳐서 같은 스레드에 쌓여요.
@@ -249,12 +219,54 @@ function buildCommentItem(post, comment, threadComment, isReply) {
   replyBtn.className = "comment-link-btn";
   replyBtn.textContent = "답글 달기";
   replyBtn.addEventListener("click", () => startReply(threadComment, comment.username));
-  const translateBtn = document.createElement("button");
-  translateBtn.className = "comment-link-btn";
-  translateBtn.textContent = "번역 보기";
-  translateBtn.addEventListener("click", () => translateComment(comment, translation, translateBtn));
   links.appendChild(replyBtn);
-  links.appendChild(translateBtn);
+  // 번역은 맨 앞 @멘션을 뺀 "내용"만 대상으로 해요 — 멘션까지 번역기에 넣으면 @아이디가
+  // 한글로 바뀌어요. 한글 댓글(내가 쓴 것 등)은 번역할 필요가 없어서 버튼을 아예 숨겨요.
+  const { mention: leadMention, body: translatableText } = splitLeadingMention(comment);
+  if (translatableText && !isMostlyKorean(translatableText)) {
+    let translated = null;
+    const showTranslation = () => {
+      translation.textContent = "";
+      if (leadMention) {
+        const mentionSpan = document.createElement("span");
+        mentionSpan.className = "comment-mention";
+        mentionSpan.textContent = leadMention;
+        translation.appendChild(mentionSpan);
+        translation.appendChild(document.createTextNode(" "));
+      }
+      translation.appendChild(document.createTextNode(translated));
+      translation.hidden = false;
+    };
+    const translateBtn = document.createElement("button");
+    translateBtn.className = "comment-link-btn";
+    translateBtn.textContent = "번역 보기";
+    translateBtn.addEventListener("click", async () => {
+      if (!translation.hidden) {
+        translation.hidden = true;
+        translateBtn.textContent = "번역 보기";
+        return;
+      }
+      if (translated) {
+        showTranslation();
+        translateBtn.textContent = "번역 숨기기";
+        return;
+      }
+      translateBtn.disabled = true;
+      translateBtn.textContent = "번역 중...";
+      const result = await translateText(translatableText, "en", "ko");
+      translateBtn.disabled = false;
+      if (!isUsableTranslation(translatableText, result)) {
+        // 실패하면 빈 칸을 보여주지 않고 알려줘요 (다시 누르면 재시도)
+        translateBtn.textContent = "번역 보기";
+        showToast("번역에 실패했어요. 잠시 후 다시 시도해 주세요.");
+        return;
+      }
+      translated = result;
+      showTranslation();
+      translateBtn.textContent = "번역 숨기기";
+    });
+    links.appendChild(translateBtn);
+  }
   body.appendChild(links);
 
   item.appendChild(body);

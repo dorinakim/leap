@@ -318,7 +318,7 @@
   margin-top: 6px;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--text-muted);
+  color: var(--accent); /* 피드 댓글창과 같은 초록색 */
 }
 
 /* 답글 — 부모 댓글 아래로 살짝 들여쓰고, 아바타도 조금 작게 */
