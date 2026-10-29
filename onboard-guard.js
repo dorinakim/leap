@@ -8,8 +8,18 @@
 //   온보딩 마지막 단계에서 둘 다 저장돼요.
 // - 브라우저가 저장을 막아둔 경우(시크릿 모드 등)엔 이동하지 않아요. 온보딩을 마쳐도 저장이
 //   안 되니까, 이동하면 온보딩이 끝없이 반복돼요.
-// - 다시 처음부터 보고 싶으면 주소 뒤에 onboarding.html 을 직접 열면 돼요.
+// - 다시 처음부터 보고 싶으면(내 폰에서 확인할 때) 주소 뒤에 ?reset 을 붙여 여세요.
+//   예) https://dorinakim.github.io/leap/?reset — 이름·언어만 지우고 온보딩으로 가요
+//   (올린 사진·댓글은 그대로예요).
 (function () {
+  try {
+    if (/[?&]reset(&|=|$)/.test(location.search)) {
+      localStorage.removeItem("leaf:userName");
+      localStorage.removeItem("leaf:userLang");
+    }
+  } catch (e) {
+    return;
+  }
   try {
     const key = "leaf:onboardGuardProbe";
     localStorage.setItem(key, "1");
